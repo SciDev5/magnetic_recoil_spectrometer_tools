@@ -1,0 +1,42 @@
+? at each convergence step, do scattering approximation in a grid of flux density linear position and polar momentum space
+
+need to calculate contributions from:
+    [adding electrons]
+        - e- + y   ->  e-        [photoelectric]
+        - e- + y   ->  e- + y    [compton]
+        - y     [Z]->  e- + e+   [pair-production]
+    [scattering electrons]
+        - ignore for now
+
+cross-sections:
+- WORKING: https://en.wikipedia.org/wiki/Gamma_ray_cross_section
+
+
+
+maybe reverse tracing? sounds quite annoying to deal with multiple particles exiting. forward tracing is more practical (esp since we only care about angle).
+
+
+
+
+one_ray:
+    - initialize empty electron distribution output
+    - for each depth of incident ray through material
+        - calculate photon number using total cross section
+        - add electron contributions from [compton, pair-production] (and account for attenuation due to depth in material (TODO))
+        - emit secondary compton-scattered rays and add contributions
+    - return electron distribution
+
+
+
+
+
+
+generalizing:
+    - should be able to swap out scattering profiles types such that you could program in gamma scattering from gold or 
+    - approximations: can ignore secondary scattering, since it will be weaker by a factor on the same order of the efficiency (~1%).
+        - may add ability to add secondary scattering back into the system.
+
+    - should be a full monte-carlo tracer to remove possible artifacts from grid spacing (also likely to make the actual writing of the software easier)
+    - use classes or similar to represent different subprocesses [such as compton scattering or the stopping power for electrons]
+
+what to do about the fact that python classes are evil and should not exist? closures?
