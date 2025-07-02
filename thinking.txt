@@ -40,3 +40,32 @@ generalizing:
     - use classes or similar to represent different subprocesses [such as compton scattering or the stopping power for electrons]
 
 what to do about the fact that python classes are evil and should not exist? closures?
+
+
+
+
+
+
+
+
+
+
+
+HOW TO ION OPTICS:
+
+need to optimize to minimize size of beam spot after system that holds across energies, while dispersing to separate the energies
+
+
+option 1:
+    use COSYScript (may be painful, but will be easy)
+
+option 2:
+    write python that writes COSYScript (probably not much better)
+
+option 3:
+    make my own system (hard)
+
+
+
+NEW PLAN: 
+use cosy to optimize the ion-optical sections, but with initial parameters controlled by a python script, output maps as files.
