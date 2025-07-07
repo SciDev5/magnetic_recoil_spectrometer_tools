@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 __current_eval_ids = set()
-__cosy_cwd = fs.path.dirname(fs.path.abspath(__file__))
+__cosy_cwd = fs.path.join(fs.path.dirname(fs.path.abspath(__file__)), "./eval/")
 
 
 def content_subs(content: str, subs: dict[str, typing.Any]) -> str:
@@ -21,11 +21,15 @@ def content_subs(content: str, subs: dict[str, typing.Any]) -> str:
     return content
 
 
-def eval_fox(content: str) -> typing.Callable[[], str]:
+def eval_fox(
+    content: str, use_gui=False, main_fn_name: str | None = None
+) -> typing.Callable[[], str]:
     """
     Executes a COSYScript file.
 
-    [note that the script's cwd will be this directory (`cosy/`)]
+    [note that the script's cwd will be this directory (`cosy/eval/`)]
+
+    To print to the output, use file handle 0.
 
     Returns a callable, which when called waits for the script to
     finish.
@@ -35,27 +39,38 @@ def eval_fox(content: str) -> typing.Callable[[], str]:
         eval_id += 1
     __current_eval_ids.add(eval_id)
 
-    output_file = fs.path.join(__cosy_cwd, f"./tmp/{eval_id}.txt")
-    content = f"""
+    output_file = fs.path.join(__cosy_cwd, f"./{eval_id}.txt")
+    content = (
+        f"""
         INCLUDE 'COSY';
         PROCEDURE run;
-        OPENF 0 './tmp/{eval_id}.txt' 'REPLACE';
-        {content}
-        CLOSEF 0;
+            {content}
+            OPENF 0 './{eval_id}.txt' 'REPLACE';
+            {main_fn_name if main_fn_name is not None else ("main_gui" if use_gui else "main")};
+            CLOSEF 0;
         ENDPROCEDURE;
         run;
         END;
-    """
+    """.strip()
+        + "\n"
+    )
 
-    with open(
-        fs.path.join(__cosy_cwd, f"./tmp/{eval_id}.fox"), "w", encoding="utf8"
-    ) as f:
+    with open(fs.path.join(__cosy_cwd, f"./{eval_id}.fox"), "w", encoding="utf8") as f:
         f.write(content)
     cosy_process = subprocess.Popen(
-        [
-            fs.path.join(__cosy_cwd, "./cosy"),
-            fs.path.join(__cosy_cwd, f"./tmp/{eval_id}.fox"),
-        ],
+        (
+            [
+                fs.path.join(__cosy_cwd, "./cosy"),
+                f"{eval_id}.fox",
+            ]
+            if not use_gui
+            else [
+                "java",
+                "-jar",
+                "./COSYGUI.jar",
+                f"{eval_id}.fox",
+            ]
+        ),
         stdout=subprocess.DEVNULL,
         cwd=__cosy_cwd,
     )
@@ -67,6 +82,20 @@ def eval_fox(content: str) -> typing.Callable[[], str]:
             return f.read()
 
     return cosy_proc_join
+
+
+def read_sub_eval(
+    location: str,
+    subs: dict[str, typing.Any],
+    use_gui=False,
+    main_fn_name: str | None = None,
+) -> typing.Callable[[], str]:
+    """
+    Read and execute the given COSYScript (.fox) file with the
+    given substitutions applied (using `content_subs`).
+    """
+    with open(location, "r", encoding="utf8") as f:
+        return eval_fox(content_subs(f.read(), subs), use_gui, main_fn_name)
 
 
 def parse_transfer_map(

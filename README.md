@@ -6,4 +6,4 @@
 ## PROJECT SETUP
 
 1. Setup COSY INFINITY
-    Place the COSY executable, `COSY.bin`, and `COSYGUI.jar` in the `cosy/` directory.
+    Place the COSY executable, `COSY.bin`, and `COSYGUI.jar` in the `cosy/eval/` directory.
