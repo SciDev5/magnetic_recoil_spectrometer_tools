@@ -109,7 +109,6 @@ PairProductionRawCrossSection = tuple[
 
 
 def calculate_pairproduction_cross_section(
-    Z: int,
     energy_gamma: npt.NDArray,  # [J]
     energy_elec_frac: npt.NDArray,  # [1]
     angle_posi: npt.NDArray,  # [rad]
@@ -135,7 +134,7 @@ def calculate_pairproduction_cross_section(
         (energy_gamma.size, energy_elec_frac.size, angle_elec.size)
     )
 
-    tick_timer = begin_timer(f"gen pair production cross-section [Z={Z}]")
+    tick_timer = begin_timer("gen pair-production cross-section")
 
     n_done = 0
     for i_energy_gamma, i_energy_elec_frac, i_angle_elec in (
@@ -203,7 +202,7 @@ def calculate_pairproduction_cross_section(
         c2 = c * c
 
         d_sigma = (
-            (Z**2 * alpha * classical_electron_radius**2 * elec_rest_energy**2)
+            (alpha * classical_electron_radius**2 * elec_rest_energy**2)
             / (2 * np.pi) ** 2
             * ((pp * pn) / (q4 * Ey**3))
             * (
@@ -276,6 +275,7 @@ def load_pairproduction_cross_section(
 
 
 def gen_cross_section_pairproduction(
+    Z: int,
     atom_number_density: float,
     cross_section: PairProductionRawCrossSection,
     override_total_csd: CrossSectionTableTotal | None = None,
@@ -285,6 +285,7 @@ def gen_cross_section_pairproduction(
         energy_elec_frac,
         angle_elec,
     ) = cross_section
+    d_sigma *= Z**2
 
     sigma_total_for_gamma_in = d_sigma.sum(axis=(1, 2))
 
