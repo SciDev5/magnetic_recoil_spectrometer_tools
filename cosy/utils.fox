@@ -1,0 +1,89 @@
+{
+    Create a new ray to be traced.
+    - x and y are position in meters.
+    - a and b are indicate x and y components of normalized momentum. ({a,b} = p_{x,y}/abs(p))
+    - t is time of flight offset
+    - energy, mass, and charge are relative.
+}
+PROCEDURE SET_RAY x a y b t energy mass charge color;
+    SR x a y b t energy mass charge color;
+ENDPROCEDURE;
+
+{ Clear the rays currently in the system. }
+PROCEDURE CLEAR_RAYS;
+    CR; {clear rays}
+ENDPROCEDURE;
+
+
+{ Unity map / Set the transfer map to the identity. }
+PROCEDURE UNITY_MAP;
+    UM; {uninitialize map}
+ENDPROCEDURE;
+
+
+{ Create an aperture element with given radius. }
+PROCEDURE ELT_APERTURE radius;
+    PS radius; {poincare surface (aperture)}
+ENDPROCEDURE;
+{ Create an element with no field and given length. }
+PROCEDURE ELT_DRIFT_LENGTH length;
+    DL length; {drift length}
+ENDPROCEDURE;
+{ Create a fifth order multipole magnet. }
+PROCEDURE ELT_MULTIPOLE_5 length b_quad b_hex b_oct b_dec b_dodec bore;
+    M5 length b_quad b_hex b_oct b_dec b_dodec bore;
+ENDPROCEDURE;
+{
+    Create a combined function bending magnet with given radius and
+    arc angle.
+        - `aperture` sets the size of the beam-ok region,
+        - `shape_in` and `shape_out` are coefficinets for polynomials that
+        shape the entrance and exit in the beam "z" direction. [these
+        arrays have length `len`]
+}
+PROCEDURE ELT_BENDING radius angle aperture N shape_in shape_out len;
+    MC radius angle aperture N shape_in shape_out len; {makes a bending magnet}
+ENDPROCEDURE;
+
+
+
+
+
+{ Set the fringe fields to the most accurate version. }
+PROCEDURE CONFIG_FRINGE_FIELD_MODE_ACCURATE;
+    FR 3; {fringe mode = accurate}
+ENDPROCEDURE;
+{
+    - `order`: maximum order of DA transfer map.
+    - `phase_space_dim`: 1: x/a only, 2: add y/b, 3: add time/chromatic effects.
+    - `parameters`: number of additional parameters to include
+}
+PROCEDURE CONFIG_ORDER_AND_VARIABLES order phase_space_dim n_parameters;
+    OV order phase_space_dim n_parameters;
+ENDPROCEDURE;
+
+{ 
+    Tell COSY that we're working with an electron beam.
+    
+    must be called after CONFIG_ORDER_AND_VARIABLES. :P
+}
+PROCEDURE CONFIG_AS_ELECTRON_BEAM nominal_energy;
+    RPE nominal_energy; {become electron with}
+ENDPROCEDURE;
+
+
+
+
+
+PROCEDURE DRAW_BEGIN_PATH;
+    BP; {begin path (drawing)}
+ENDPROCEDURE;
+PROCEDURE DRAW_END_PATH;
+    EP; {end path (drawing)}
+ENDPROCEDURE;
+
+{PG -1 -2; {idk, makes it draw from the sides}}
+
+PROCEDURE WRITE_MAP destination;
+    PM destination; {print map}
+ENDPROCEDURE;

@@ -18,6 +18,8 @@ CrossSectionTableTotal = tuple[npt.NDArray, npt.NDArray]
 
 # ( [theta/rad; n], [energy/J; n] )
 AngleEnergy = tuple[npt.NDArray, npt.NDArray]
+# ( [theta/rad; n], [energy/J; n] )
+AngleEnergyId = tuple[npt.NDArray, npt.NDArray, npt.NDArray]
 
 # (phot_energy/J) -> cross_section_density/(/m)
 CrossSectionFnTotal = ty.Callable[[float], float]
@@ -27,8 +29,8 @@ CrossSection = tuple[CrossSectionFnTotal, CrossSectionFnGenrays]
 
 Foil = tuple[SRXMData, list[CrossSection]]
 
-ThetaPhiXYEnergy = tuple[
-    npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray
+ThetaPhiXYEnergyId = tuple[
+    npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray
 ]
 
 RaysXAYBERelative = npt.NDArray
@@ -53,7 +55,7 @@ def foil_trace(
     phot_energy_in: float,
     foil_properties: Foil,
     foil_depth: float,
-) -> AngleEnergy:
+) -> AngleEnergyId:
     srxm, cross_sections = foil_properties
     cross_section_density_totals = [
         cross_section[0](phot_energy_in) for cross_section in cross_sections
@@ -88,17 +90,22 @@ def foil_trace(
         elec_angles_out.append(elec_angle[valid])
         elec_energies_out.append(elec_energy[valid])
 
-    return np.concatenate(elec_angles_out), np.concatenate(elec_energies_out)
+    return (
+        np.concatenate(elec_angles_out),
+        np.concatenate(elec_energies_out),
+        np.concatenate([np.repeat([i], x.size) for i, x in enumerate(elec_angles_out)]),
+    )
 
 
 def aperture(
-    foil_electrons: AngleEnergy,
+    foil_electrons: AngleEnergyId,
     foil_radius: float,
     aperature_radius: float,
     aperature_offset: float,
     replication: int = 1,
-) -> ThetaPhiXYEnergy:
-    angle_in, energy_in = foil_electrons
+) -> ThetaPhiXYEnergyId:
+    angle_in, energy_in, id_in = foil_electrons
+    id_out = np.array([])
     angle_out = np.array([])
     angle_phi_out = np.array([])
     pos_x_out = np.array([])
@@ -116,6 +123,7 @@ def aperture(
 
         aperature_out_mask = (x * x + y * y) < (aperature_radius**2)
 
+        id_out = np.concatenate([id_out, id_in[aperature_out_mask]])
         angle_out = np.concatenate([angle_out, angle_in[aperature_out_mask]])
         angle_phi_out = np.concatenate(
             [angle_phi_out, angle_phi_in[aperature_out_mask]]
@@ -124,20 +132,39 @@ def aperture(
         pos_y_out = np.concatenate([pos_y_out, y[aperature_out_mask]])
         energy_out = np.concatenate([energy_out, energy_in[aperature_out_mask]])
 
-    return angle_out, angle_phi_out, pos_x_out, pos_y_out, energy_out
+    return angle_out, angle_phi_out, pos_x_out, pos_y_out, energy_out, id_out
 
 
 def rays_into_relative(
-    rays: ThetaPhiXYEnergy,
+    rays: ThetaPhiXYEnergyId,
     center_energy: float,
 ) -> RaysXAYBERelative:
-    th, ph, x, y, e = rays
+    th, ph, x, y, e, _ = rays
     return np.transpose(
         np.array(
-            x,
-            np.sin(th) * np.cos(ph),
-            y,
-            np.sin(th) * np.sin(ph),
-            1 - e / center_energy,
+            [
+                x,
+                np.sin(th) * np.cos(ph),
+                y,
+                np.sin(th) * np.sin(ph),
+                1 - e / center_energy,
+            ]
         )
+    )
+
+
+def relative_rays_into_cosyscript(rays: RaysXAYBERelative, color=0) -> str:
+    return "\n".join(
+        [f"SR {x} {a} {y} {b} 0 {e} 0 0 {color};" for x, a, y, b, e in rays]
+    )
+
+
+def rays_to_cosyscript(
+    rays: ThetaPhiXYEnergyId,
+    center_energy: float,
+    color=0,
+) -> str:
+    return relative_rays_into_cosyscript(
+        rays_into_relative(rays, center_energy),
+        color,
     )

@@ -34,6 +34,13 @@ def eval_fox(
     Returns a callable, which when called waits for the script to
     finish.
     """
+    vars = ""
+    content = content.strip()
+    while content.upper().startswith("VARIABLE "):
+        i = content.index(";") + 1
+        vars += content[:i]
+        content = content[i:].strip()
+
     eval_id = 0
     while eval_id in __current_eval_ids:
         eval_id += 1
@@ -43,6 +50,7 @@ def eval_fox(
     content = (
         f"""
         INCLUDE 'COSY';
+        {vars}
         PROCEDURE run;
             {content}
             OPENF 0 './{eval_id}.txt' 'REPLACE';
@@ -166,3 +174,11 @@ def parse_write_dict(
         k, v, src = parse_write(src)
         out[k] = v[0] if v.size == 1 and reduce_single else v
     return out, src
+
+
+with open(
+    fs.path.join(fs.path.dirname(fs.path.abspath(__file__)), "./utils.fox"),
+    "r",
+    encoding="utf8",
+) as f:
+    INCLUDE_UTILS = {"INCLUDE_UTILS": f.read()}

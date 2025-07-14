@@ -304,9 +304,7 @@ def gen_cross_section_pairproduction(
         elec_energy_frac_out, elec_angle_out = sample_distr_1_2(
             count, raw_distr, phot_energy_in
         )
-        elec_energy_out = (
-            phot_energy_in - elec_rest_energy * 2
-        ) * elec_energy_frac_out + elec_rest_energy
+        elec_energy_out = (phot_energy_in - elec_rest_energy * 2) * elec_energy_frac_out
         return elec_angle_out, elec_energy_out
 
     return (
