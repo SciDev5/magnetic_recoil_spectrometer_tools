@@ -1,16 +1,16 @@
 VARIABLE IDK_WHAT_THIS_DOES 1 5;
 VARIABLE shape_in 1 5;
-VARIABLE shape_in_1 1;
-VARIABLE shape_in_2 1;
-VARIABLE shape_in_3 1;
-VARIABLE shape_in_4 1;
-VARIABLE shape_in_5 1;
+VARIABLE p_shape_in_1 1;
+VARIABLE p_shape_in_2 1;
+VARIABLE p_shape_in_3 1;
+VARIABLE p_shape_in_4 1;
+VARIABLE p_shape_in_5 1;
 VARIABLE shape_out 1 5;
-VARIABLE shape_out_1 1;
-VARIABLE shape_out_2 1;
-VARIABLE shape_out_3 1;
-VARIABLE shape_out_4 1;
-VARIABLE shape_out_5 1;
+VARIABLE p_shape_out_1 1;
+VARIABLE p_shape_out_2 1;
+VARIABLE p_shape_out_3 1;
+VARIABLE p_shape_out_4 1;
+VARIABLE p_shape_out_5 1;
 
 VARIABLE p_bend_radius 1;
 VARIABLE p_bend_angle 1;
@@ -44,8 +44,8 @@ PROCEDURE config_spectrogram;
 ENDPROCEDURE;
 
 PROCEDURE elt_spectrogram;
-    shape_in(1) := shape_in_1;
-    shape_out(1) := shape_out_1;
+    shape_in(1) := p_shape_in_1;
+    shape_out(1) := p_shape_out_1;
 
     ELT_DRIFT_LENGTH p_drift_post_aperture;
     ELT_MULTIPOLE_5
@@ -54,17 +54,26 @@ PROCEDURE elt_spectrogram;
         0.05;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
     ELT_BENDING
-        p_bend_radius p_bend_angle 0.05
+        p_bend_radius p_bend_angle 0.075
         IDK_WHAT_THIS_DOES shape_in shape_out 5;
     { ELT_DRIFT_LENGTH p_drift_post_bend;
     ELT_MULTIPOLE_5 
         p_m5b_length
         p_m5b_quad 0.0 0.0 0.0 0.0
-        0.05; }
+        0.025; }
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
 ENDPROCEDURE;
 
 
+PROCEDURE prep_draw;
+    PTY {{pty_value}};
+	UNITY_MAP;
+	CLEAR_RAYS;
+	gen_rays;
+	DRAW_BEGIN_PATH;
+    elt_spectrogram;
+	DRAW_END_PATH;
+ENDPROCEDURE;
 
 PROCEDURE main_common;
     config_spectrogram;
@@ -79,8 +88,8 @@ PROCEDURE main_common;
     p_m5a_quad := {{p_m5a_quad}};
     p_m5b_length := {{p_m5b_length}};
     p_m5b_quad := {{p_m5b_quad}};
-    shape_in_1 := {{shape_in_1}};
-    shape_out_1 := {{shape_out_1}};
+    p_shape_in_1 := {{p_shape_in_1}};
+    p_shape_out_1 := {{p_shape_out_1}};
 
     IF {{do_fit}};
         FIT {{fit_args}};
@@ -108,8 +117,9 @@ PROCEDURE main_common;
             { obj := MAX(ABS(ME(1,1)),10*ABS(ME(1,2)))/ABS(ME(1,6)); }
             { obj := ME(1,1); }
             { obj := MAX(ME(1,1),50*ME(1,2)); }
-            obj := ABS(ME(1,1))+10*ABS(ME(1,2));
-            { obj := ME(1,2); }
+            { obj := ME(1,1)+4*ME(1,2); }
+            { obj := ABS(ME(1,1))+10*ABS(ME(1,2)); }
+            obj := ME(1,2);
 
             { IF   p_drift_post_aperture<0.075; obj := obj + ( 0.075 - p_drift_post_aperture ) * 10  ; ENDIF;
             IF        p_drift_pre_bend<0.001; obj := obj + ( 0.001 - p_drift_pre_bend      ) * 1000; ENDIF;
@@ -122,13 +132,7 @@ PROCEDURE main_common;
             IF            p_m5b_length<0.025; obj := obj + ( 0.025 - p_m5b_length          ) * 1000; ENDIF; }
 
             IF do_vis>0.5;
-                PTY 1;
-                UNITY_MAP;
-                CLEAR_RAYS;
-                gen_rays;
-                DRAW_BEGIN_PATH;
-                elt_spectrogram;
-                DRAW_END_PATH;
+                prep_draw;
                 PG -1 -2;
             ENDIF;
 
@@ -152,8 +156,8 @@ PROCEDURE main_common;
     WRITE 0 'p_m5a_quad' p_m5a_quad;
     WRITE 0 'p_m5b_length' p_m5b_length;
     WRITE 0 'p_m5b_quad' p_m5b_quad;
-    WRITE 0 'shape_in_1' shape_in_1;
-    WRITE 0 'shape_out_1' shape_out_1;
+    WRITE 0 'p_shape_in_1' p_shape_in_1;
+    WRITE 0 'p_shape_out_1' p_shape_out_1;
     WRITE 0 '';
     WRITE 0 'outputs' {{outputs}};
     WRITE 0 '';
@@ -163,28 +167,25 @@ ENDPROCEDURE;
 PROCEDURE main;
     do_vis := 0;
     main_common;
-
-	{ UNITY_MAP;
-	CLEAR_RAYS;
-	gen_rays;
-    elt_spectrogram;
-    WRITE_MAP 0; }
 ENDPROCEDURE;
+
 
 PROCEDURE main_gui;
     do_vis := 1;
     main_common;
 
-    PTY 1;
-	UNITY_MAP;
-	CLEAR_RAYS;
-	gen_rays;
-	DRAW_BEGIN_PATH;
-    elt_spectrogram;
-	DRAW_END_PATH;
+    prep_draw;
 	PG -1 -2;
 
     WRITE 6 'magnification:' ME(1,1);
     WRITE 6 'focus:' ME(1,2);
     WRITE 6 'dispersion:' ME(1,6);
+ENDPROCEDURE;
+
+PROCEDURE main_svg;
+    do_vis := 0;
+    main_common;
+
+    prep_draw;
+	PG -13 -13;
 ENDPROCEDURE;

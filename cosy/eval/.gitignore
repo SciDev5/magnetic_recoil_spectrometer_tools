@@ -1,6 +1,7 @@
 *.fox
 *.lis
 *.txt
+*.svg
 cosy
 cosy.exe
 COSY.bin
