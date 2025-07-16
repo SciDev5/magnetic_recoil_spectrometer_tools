@@ -155,7 +155,10 @@ def rays_into_relative(
 
 def relative_rays_into_cosyscript(rays: RaysXAYBERelative, color=0) -> str:
     return "\n".join(
-        [f"SR {x} {a} {y} {b} 0 {e} 0 0 {color};" for x, a, y, b, e in rays]
+        [
+            f"SR {x} {a} {y} {b} 0 {e} 0 0 {color};"
+            for x, a, y, b, e in np.round(rays, decimals=10)
+        ]
     )
 
 

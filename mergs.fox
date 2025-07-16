@@ -1,0 +1,65 @@
+VARIABLE IDK_WHAT_THIS_DOES 1 5;
+VARIABLE shape_out 1 5;
+VARIABLE shape_out 1 5;
+
+{{INCLUDE_UTILS}}
+
+PROCEDURE gen_rays;
+    {{input_rays}}
+    { SR 0 0 0 0 0 0 0 0 7;
+    SR  0.01 0 0 0 0 0 0 0 9;
+    SR -0.01 0 0 0 0 0 0 0 9;
+    SR 0 0  0.01 0 0 0 0 0 9;
+    SR 0 0 -0.01 0 0 0 0 0 9;
+    SR 0  0.01 0 0 0 0 0 0 8;
+    SR 0 -0.01 0 0 0 0 0 0 8;
+    SR 0 0 0  0.01 0 0 0 0 8;
+    SR 0 0 0 -0.01 0 0 0 0 8; }
+ENDPROCEDURE;
+
+PROCEDURE config_spectrogram;
+    CONFIG_ORDER_AND_VARIABLES 5 3 0;
+    CONFIG_AS_ELECTRON_BEAM 16;
+ENDPROCEDURE;
+
+PROCEDURE elt_spectrogram;
+    ELT_DRIFT_LENGTH 0.25;
+    ELT_MULTIPOLE_5
+        0.02
+        1.0 0.0 0.0 0.0 0.0
+        0.05;
+    ELT_DRIFT_LENGTH 0.25;
+    ELT_BENDING
+        0.2 90 0.01
+        IDK_WHAT_THIS_DOES shape_in shape_out 5;
+    ELT_DRIFT_LENGTH 0.25;
+    ELT_MULTIPOLE_5 
+        0.02
+        -1.0 0.0 0.0 0.0 0.0
+        0.05;
+    ELT_DRIFT_LENGTH 0.25;
+ENDPROCEDURE;
+
+
+
+PROCEDURE main;
+    config_spectrogram;
+	UNITY_MAP;
+	CLEAR_RAYS;
+	gen_rays;
+
+    elt_spectrogram;
+    WRITE_MAP 0;
+ENDPROCEDURE;
+
+PROCEDURE main_gui;
+    config_spectrogram;
+	UNITY_MAP;
+	CLEAR_RAYS;
+	gen_rays;
+
+	DRAW_BEGIN_PATH;
+    elt_spectrogram;
+	DRAW_END_PATH;
+	PG -1 -2;
+ENDPROCEDURE;

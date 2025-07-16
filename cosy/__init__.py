@@ -38,7 +38,7 @@ def eval_fox(
     content = content.strip()
     while content.upper().startswith("VARIABLE "):
         i = content.index(";") + 1
-        vars += content[:i]
+        vars += "\n" + content[:i]
         content = content[i:].strip()
 
     eval_id = 0
@@ -50,8 +50,8 @@ def eval_fox(
     content = (
         f"""
         INCLUDE 'COSY';
-        {vars}
         PROCEDURE run;
+            {vars}
             {content}
             OPENF 0 './{eval_id}.txt' 'REPLACE';
             {main_fn_name if main_fn_name is not None else ("main_gui" if use_gui else "main")};
@@ -114,6 +114,12 @@ def parse_transfer_map(
 
     `(x,a,y,b,t,K) -> (x,a,y,b,t)`
     """
+    src_ = src.strip()
+    i = src_.find("----")
+    if i == 0:
+        while i < len(src) and src[i] != "\n":
+            i += 1
+        src = src_[i + 1 :]
     src_end_i = src.find("----")
     if src_end_i == -1:
         raise ValueError("map data invalid")
@@ -140,7 +146,7 @@ def parse_transfer_map(
         return sum(
             row * np.prod(np.power(args, basis_powers))
             for row, basis_powers in map_data
-        )
+        ) + np.zeros(5)
 
     return eval_map, rem
 

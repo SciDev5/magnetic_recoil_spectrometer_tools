@@ -1,0 +1,190 @@
+VARIABLE IDK_WHAT_THIS_DOES 1 5;
+VARIABLE shape_in 1 5;
+VARIABLE shape_in_1 1;
+VARIABLE shape_in_2 1;
+VARIABLE shape_in_3 1;
+VARIABLE shape_in_4 1;
+VARIABLE shape_in_5 1;
+VARIABLE shape_out 1 5;
+VARIABLE shape_out_1 1;
+VARIABLE shape_out_2 1;
+VARIABLE shape_out_3 1;
+VARIABLE shape_out_4 1;
+VARIABLE shape_out_5 1;
+
+VARIABLE p_bend_radius 1;
+VARIABLE p_bend_angle 1;
+VARIABLE p_drift_post_aperture 1;
+VARIABLE p_drift_pre_bend 1;
+VARIABLE p_drift_post_bend 1;
+VARIABLE p_drift_pre_hodoscope 1;
+VARIABLE p_m5a_length 1;
+VARIABLE p_m5a_quad 1;
+VARIABLE p_m5b_length 1;
+VARIABLE p_m5b_quad 1;
+
+VARIABLE obj 1;
+
+VARIABLE WV 1;
+VARIABLE WVY 1;
+VARIABLE WW 1 2;
+VARIABLE CENTER 1;
+
+VARIABLE do_vis 1;
+
+{{INCLUDE_UTILS}}
+
+PROCEDURE gen_rays;
+    {{input_rays}}
+ENDPROCEDURE;
+
+PROCEDURE config_spectrogram;
+    CONFIG_ORDER_AND_VARIABLES {{order}} 3 0;
+    CONFIG_AS_ELECTRON_BEAM 16;
+ENDPROCEDURE;
+
+PROCEDURE elt_spectrogram;
+    shape_in(1) := shape_in_1;
+    shape_out(1) := shape_out_1;
+
+    ELT_DRIFT_LENGTH p_drift_post_aperture;
+    ELT_MULTIPOLE_5
+        p_m5a_length
+        p_m5a_quad 0.0 0.0 0.0 0.0
+        0.05;
+    ELT_DRIFT_LENGTH p_drift_pre_bend;
+    ELT_BENDING
+        p_bend_radius p_bend_angle 0.05
+        IDK_WHAT_THIS_DOES shape_in shape_out 5;
+    { ELT_DRIFT_LENGTH p_drift_post_bend;
+    ELT_MULTIPOLE_5 
+        p_m5b_length
+        p_m5b_quad 0.0 0.0 0.0 0.0
+        0.05; }
+    ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
+ENDPROCEDURE;
+
+
+
+PROCEDURE main_common;
+    config_spectrogram;
+
+    p_bend_radius := {{p_bend_radius}};
+    p_bend_angle := {{p_bend_angle}};
+    p_drift_post_aperture := {{p_drift_post_aperture}};
+    p_drift_pre_bend := {{p_drift_pre_bend}};
+    p_drift_post_bend := {{p_drift_post_bend}};
+    p_drift_pre_hodoscope := {{p_drift_pre_hodoscope}};
+    p_m5a_length := {{p_m5a_length}};
+    p_m5a_quad := {{p_m5a_quad}};
+    p_m5b_length := {{p_m5b_length}};
+    p_m5b_quad := {{p_m5b_quad}};
+    shape_in_1 := {{shape_in_1}};
+    shape_out_1 := {{shape_out_1}};
+
+    IF {{do_fit}};
+        FIT {{fit_args}};
+            IF p_bend_radius<0.001; p_bend_radius := 0.001; ENDIF;
+            IF p_drift_post_aperture<0.05; p_drift_post_aperture := 0.05; ENDIF;
+            IF p_drift_pre_bend<0.001; p_drift_pre_bend := 0.001; ENDIF;
+            IF p_drift_pre_hodoscope<0.001; p_drift_pre_hodoscope := 0.001; ENDIF;
+            IF p_m5a_length<0.01; p_m5a_length := 0.01; ENDIF;
+            IF p_m5b_length<0.01; p_m5b_length := 0.01; ENDIF;
+
+            UNITY_MAP;
+            CLEAR_RAYS;
+            { gen_rays; }
+            elt_spectrogram;
+
+            
+            { WW(1):= VMAX(RAY(1));
+            WW(2):= VMIN(RAY(1));
+            WV:=(WW(1)-WW(2))/2;
+            WW(1):= VMAX(RAY(3));
+            WW(2):= VMIN(RAY(3));
+            WVY:=(WW(1)-WW(2))/2; }
+
+            { obj := WV; }
+            { obj := MAX(ABS(ME(1,1)),10*ABS(ME(1,2)))/ABS(ME(1,6)); }
+            { obj := ME(1,1); }
+            { obj := MAX(ME(1,1),50*ME(1,2)); }
+            obj := ABS(ME(1,1))+10*ABS(ME(1,2));
+            { obj := ME(1,2); }
+
+            { IF   p_drift_post_aperture<0.075; obj := obj + ( 0.075 - p_drift_post_aperture ) * 10  ; ENDIF;
+            IF        p_drift_pre_bend<0.001; obj := obj + ( 0.001 - p_drift_pre_bend      ) * 1000; ENDIF;
+            IF       p_drift_post_bend<0.001; obj := obj + ( 0.001 - p_drift_post_bend     ) * 1000; ENDIF;
+            IF   p_drift_pre_hodoscope<0.001; obj := obj + ( 0.001 - p_drift_pre_hodoscope ) * 1000; ENDIF;
+            IF           p_bend_radius<0.200; obj := obj + ( 0.200 - p_bend_radius         ) * 1000; ENDIF;
+            IF            p_bend_angle<10.00; obj := obj + ( 10.00 - p_bend_angle          ) * 1000; ENDIF;
+            IF            p_bend_angle>100.0; obj := obj + ( p_bend_angle - 100.0          ) * 1000; ENDIF;
+            IF            p_m5a_length<0.025; obj := obj + ( 0.025 - p_m5a_length          ) * 1000; ENDIF;
+            IF            p_m5b_length<0.025; obj := obj + ( 0.025 - p_m5b_length          ) * 1000; ENDIF; }
+
+            IF do_vis>0.5;
+                PTY 1;
+                UNITY_MAP;
+                CLEAR_RAYS;
+                gen_rays;
+                DRAW_BEGIN_PATH;
+                elt_spectrogram;
+                DRAW_END_PATH;
+                PG -1 -2;
+            ENDIF;
+
+		{ optimization algorithms
+            1-symplectic
+            2-N/A
+            3-sim. annealing
+            4-Newton's Method }
+		 ENDFIT {{fit_tolerance}} {{fit_n_max}} {{fit_algorithm}} obj;
+    ENDIF;
+    UNITY_MAP;
+    CLEAR_RAYS;
+    elt_spectrogram;
+    WRITE 0 'p_bend_radius' p_bend_radius;
+    WRITE 0 'p_bend_angle' p_bend_angle;
+    WRITE 0 'p_drift_post_aperture' p_drift_post_aperture;
+    WRITE 0 'p_drift_pre_bend' p_drift_pre_bend;
+    WRITE 0 'p_drift_post_bend' p_drift_post_bend;
+    WRITE 0 'p_drift_pre_hodoscope' p_drift_pre_hodoscope;
+    WRITE 0 'p_m5a_length' p_m5a_length;
+    WRITE 0 'p_m5a_quad' p_m5a_quad;
+    WRITE 0 'p_m5b_length' p_m5b_length;
+    WRITE 0 'p_m5b_quad' p_m5b_quad;
+    WRITE 0 'shape_in_1' shape_in_1;
+    WRITE 0 'shape_out_1' shape_out_1;
+    WRITE 0 '';
+    WRITE 0 'outputs' {{outputs}};
+    WRITE 0 '';
+    WRITE_MAP 0;
+ENDPROCEDURE;
+
+PROCEDURE main;
+    do_vis := 0;
+    main_common;
+
+	{ UNITY_MAP;
+	CLEAR_RAYS;
+	gen_rays;
+    elt_spectrogram;
+    WRITE_MAP 0; }
+ENDPROCEDURE;
+
+PROCEDURE main_gui;
+    do_vis := 1;
+    main_common;
+
+    PTY 1;
+	UNITY_MAP;
+	CLEAR_RAYS;
+	gen_rays;
+	DRAW_BEGIN_PATH;
+    elt_spectrogram;
+	DRAW_END_PATH;
+	PG -1 -2;
+
+    WRITE 6 'magnification:' ME(1,1);
+    WRITE 6 'focus:' ME(1,2);
+    WRITE 6 'dispersion:' ME(1,6);
+ENDPROCEDURE;
