@@ -11,6 +11,7 @@ VARIABLE p_shape_out_2 1;
 VARIABLE p_shape_out_3 1;
 VARIABLE p_shape_out_4 1;
 VARIABLE p_shape_out_5 1;
+VARIABLE shape_zero 1 5;
 
 VARIABLE p_bend_radius 1;
 VARIABLE p_bend_angle 1;
@@ -56,12 +57,49 @@ PROCEDURE elt_spectrogram;
     ELT_BENDING
         p_bend_radius p_bend_angle 0.075
         IDK_WHAT_THIS_DOES shape_in shape_out 5;
-    { ELT_DRIFT_LENGTH p_drift_post_bend;
+    ELT_DRIFT_LENGTH p_drift_post_bend;
     ELT_MULTIPOLE_5 
         p_m5b_length
         p_m5b_quad 0.0 0.0 0.0 0.0
-        0.025; }
+        0.025;
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
+    
+    ELT_APERTURE 0.05; {for scoping hodoscope size}
+ENDPROCEDURE;
+
+PROCEDURE beamsize_elt_spectrogram;
+    PROCEDURE beamsize;
+        WRITE 0 'beamsize'
+            (VMAX(RAY(1))-VMIN(RAY(1)))/2
+            (VMAX(RAY(3))-VMIN(RAY(3)))/2;
+    ENDPROCEDURE;
+
+    shape_in(1) := p_shape_in_1;
+    shape_out(1) := p_shape_out_1;
+    shape_zero(1) := 0;
+
+    ELT_DRIFT_LENGTH p_drift_post_aperture;
+    beamsize;
+    ELT_MULTIPOLE_5
+        p_m5a_length
+        p_m5a_quad 0.0 0.0 0.0 0.0
+        0.05;
+    beamsize;
+    ELT_DRIFT_LENGTH p_drift_pre_bend;
+    beamsize;
+    ELT_BENDING
+        p_bend_radius p_bend_angle 0.075
+        IDK_WHAT_THIS_DOES shape_in shape_out 5;
+    beamsize;
+    ELT_DRIFT_LENGTH p_drift_post_bend;
+    beamsize;
+    ELT_MULTIPOLE_5 
+        p_m5b_length
+        p_m5b_quad 0.0 0.0 0.0 0.0
+        0.025;
+    ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
+    beamsize;
+    ELT_APERTURE 0.05; {for scoping hodoscope size}
 ENDPROCEDURE;
 
 
@@ -143,8 +181,10 @@ PROCEDURE main_common;
             4-Newton's Method }
 		 ENDFIT {{fit_tolerance}} {{fit_n_max}} {{fit_algorithm}} obj;
     ENDIF;
+    { ---- primary outputs ---- }
     UNITY_MAP;
     CLEAR_RAYS;
+    gen_rays;
     elt_spectrogram;
     WRITE 0 'p_bend_radius' p_bend_radius;
     WRITE 0 'p_bend_angle' p_bend_angle;
@@ -162,6 +202,14 @@ PROCEDURE main_common;
     WRITE 0 'outputs' {{outputs}};
     WRITE 0 '';
     WRITE_MAP 0;
+    WRITE 0 '';
+    { ---- beam size outputs ---- }
+    if {{do_beamsize}};
+        UNITY_MAP;
+        CLEAR_RAYS;
+        gen_rays;
+        beamsize_elt_spectrogram;
+    ENDIF;
 ENDPROCEDURE;
 
 PROCEDURE main;

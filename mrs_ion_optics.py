@@ -3,6 +3,7 @@
 import os
 
 import numpy as np
+import numpy.typing as npt
 
 import cosy
 import acceptance
@@ -55,8 +56,10 @@ class MRSIonOptics:
         self.config["pty_value"] = 1 if vis_lab_coordinates else 0
         return self
 
-    def config_outputs(self, outputs: list[str]):
+    def config_outputs(self, outputs: list[str], do_beamsize=False):
         self.config["outputs"] = " ".join(outputs)
+        self.do_beamsize = do_beamsize
+        self.config["do_beamsize"] = do_beamsize
         return self
 
     def config_fit(
@@ -112,7 +115,14 @@ class MRSIonOptics:
         parameter_values, out = cosy.parse_write_dict(out)
         _, outputs, out = cosy.parse_write(out)
         transfer_map, out = cosy.parse_transfer_map(out)
-        return parameter_values, outputs, transfer_map
+        if self.do_beamsize:
+            beamsize: list[npt.NDArray] | None = []
+            for _ in range(6):
+                _, beamsize_v, out = cosy.parse_write(out)
+                beamsize.append(beamsize_v)
+        else:
+            beamsize = None
+        return parameter_values, outputs, transfer_map, beamsize
 
     def exec_svg(self):
         self.exec(main_fn_name="main_svg")
@@ -131,11 +141,11 @@ class MRSIonOptics:
         return pic_0, pic_1
 
     def exec_fit(self, use_gui=False, disable_fit=True):
-        parameter_values, outputs, transfer_map = self.exec(use_gui=use_gui)
+        parameter_values, outputs, transfer_map, beamsize = self.exec(use_gui=use_gui)
         self.set_parameters(parameter_values)
         if disable_fit:
             self.disable_fit()
-        return outputs, transfer_map
+        return outputs, transfer_map, beamsize
 
     def print_params(self):
         for k in self.parameter_values.keys():
