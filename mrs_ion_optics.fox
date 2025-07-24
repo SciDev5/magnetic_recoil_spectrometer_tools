@@ -21,8 +21,16 @@ VARIABLE p_drift_post_bend 1;
 VARIABLE p_drift_pre_hodoscope 1;
 VARIABLE p_m5a_length 1;
 VARIABLE p_m5a_quad 1;
+VARIABLE p_m5a_hex 1;
+VARIABLE p_m5a_oct 1;
+VARIABLE p_m5a_dec 1;
+VARIABLE p_m5a_dodec 1;
 VARIABLE p_m5b_length 1;
 VARIABLE p_m5b_quad 1;
+VARIABLE p_m5b_hex 1;
+VARIABLE p_m5b_oct 1;
+VARIABLE p_m5b_dec 1;
+VARIABLE p_m5b_dodec 1;
 
 VARIABLE obj 1;
 
@@ -46,12 +54,20 @@ ENDPROCEDURE;
 
 PROCEDURE elt_spectrogram;
     shape_in(1) := p_shape_in_1;
+    shape_in(2) := p_shape_in_2;
+    shape_in(3) := p_shape_in_3;
+    shape_in(4) := p_shape_in_4;
+    shape_in(5) := p_shape_in_5;
     shape_out(1) := p_shape_out_1;
+    shape_out(2) := p_shape_out_2;
+    shape_out(3) := p_shape_out_3;
+    shape_out(4) := p_shape_out_4;
+    shape_out(5) := p_shape_out_5;
 
     ELT_DRIFT_LENGTH p_drift_post_aperture;
     ELT_MULTIPOLE_5
         p_m5a_length
-        p_m5a_quad 0.0 0.0 0.0 0.0
+        p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
     ELT_BENDING
@@ -60,8 +76,8 @@ PROCEDURE elt_spectrogram;
     ELT_DRIFT_LENGTH p_drift_post_bend;
     ELT_MULTIPOLE_5 
         p_m5b_length
-        p_m5b_quad 0.0 0.0 0.0 0.0
-        0.025;
+        p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
+        0.05;
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
     
     ELT_APERTURE 0.05; {for scoping hodoscope size}
@@ -75,14 +91,26 @@ PROCEDURE beamsize_elt_spectrogram;
     ENDPROCEDURE;
 
     shape_in(1) := p_shape_in_1;
+    shape_in(2) := p_shape_in_2;
+    shape_in(3) := p_shape_in_3;
+    shape_in(4) := p_shape_in_4;
+    shape_in(5) := p_shape_in_5;
     shape_out(1) := p_shape_out_1;
+    shape_out(2) := p_shape_out_2;
+    shape_out(3) := p_shape_out_3;
+    shape_out(4) := p_shape_out_4;
+    shape_out(5) := p_shape_out_5;
     shape_zero(1) := 0;
+    shape_zero(2) := 0;
+    shape_zero(3) := 0;
+    shape_zero(4) := 0;
+    shape_zero(5) := 0;
 
     ELT_DRIFT_LENGTH p_drift_post_aperture;
     beamsize;
     ELT_MULTIPOLE_5
         p_m5a_length
-        p_m5a_quad 0.0 0.0 0.0 0.0
+        p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
     beamsize;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
@@ -95,7 +123,7 @@ PROCEDURE beamsize_elt_spectrogram;
     beamsize;
     ELT_MULTIPOLE_5 
         p_m5b_length
-        p_m5b_quad 0.0 0.0 0.0 0.0
+        p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
         0.025;
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
     beamsize;
@@ -124,10 +152,26 @@ PROCEDURE main_common;
     p_drift_pre_hodoscope := {{p_drift_pre_hodoscope}};
     p_m5a_length := {{p_m5a_length}};
     p_m5a_quad := {{p_m5a_quad}};
+    p_m5a_hex := {{p_m5a_hex}};
+    p_m5a_oct := {{p_m5a_oct}};
+    p_m5a_dec := {{p_m5a_dec}};
+    p_m5a_dodec := {{p_m5a_dodec}};
     p_m5b_length := {{p_m5b_length}};
     p_m5b_quad := {{p_m5b_quad}};
+    p_m5b_hex := {{p_m5b_hex}};
+    p_m5b_oct := {{p_m5b_oct}};
+    p_m5b_dec := {{p_m5b_dec}};
+    p_m5b_dodec := {{p_m5b_dodec}};
     p_shape_in_1 := {{p_shape_in_1}};
+    p_shape_in_2 := {{p_shape_in_2}};
+    p_shape_in_3 := {{p_shape_in_3}};
+    p_shape_in_4 := {{p_shape_in_4}};
+    p_shape_in_5 := {{p_shape_in_5}};
     p_shape_out_1 := {{p_shape_out_1}};
+    p_shape_out_2 := {{p_shape_out_2}};
+    p_shape_out_3 := {{p_shape_out_3}};
+    p_shape_out_4 := {{p_shape_out_4}};
+    p_shape_out_5 := {{p_shape_out_5}};
 
     IF {{do_fit}};
         FIT {{fit_args}};
@@ -194,10 +238,26 @@ PROCEDURE main_common;
     WRITE 0 'p_drift_pre_hodoscope' p_drift_pre_hodoscope;
     WRITE 0 'p_m5a_length' p_m5a_length;
     WRITE 0 'p_m5a_quad' p_m5a_quad;
+    WRITE 0 'p_m5a_hex' p_m5a_hex;
+    WRITE 0 'p_m5a_oct' p_m5a_oct;
+    WRITE 0 'p_m5a_dec' p_m5a_dec;
+    WRITE 0 'p_m5a_dodec' p_m5a_dodec;
     WRITE 0 'p_m5b_length' p_m5b_length;
     WRITE 0 'p_m5b_quad' p_m5b_quad;
+    WRITE 0 'p_m5b_hex' p_m5b_hex;
+    WRITE 0 'p_m5b_oct' p_m5b_oct;
+    WRITE 0 'p_m5b_dec' p_m5b_dec;
+    WRITE 0 'p_m5b_dodec' p_m5b_dodec;
     WRITE 0 'p_shape_in_1' p_shape_in_1;
+    WRITE 0 'p_shape_in_2' p_shape_in_2;
+    WRITE 0 'p_shape_in_3' p_shape_in_3;
+    WRITE 0 'p_shape_in_4' p_shape_in_4;
+    WRITE 0 'p_shape_in_5' p_shape_in_5;
     WRITE 0 'p_shape_out_1' p_shape_out_1;
+    WRITE 0 'p_shape_out_2' p_shape_out_2;
+    WRITE 0 'p_shape_out_3' p_shape_out_3;
+    WRITE 0 'p_shape_out_4' p_shape_out_4;
+    WRITE 0 'p_shape_out_5' p_shape_out_5;
     WRITE 0 '';
     WRITE 0 'outputs' {{outputs}};
     WRITE 0 '';
