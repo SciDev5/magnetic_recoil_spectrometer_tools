@@ -45,6 +45,18 @@ class MRSIonOptics:
 
     def __init__(self):
         self.parameter_values = {
+            # K_p_bend_radius: 0.5,
+            # K_p_bend_angle: 40,
+            # K_p_drift_post_aperture: 0.05,
+            # K_p_drift_pre_bend: 0.05,
+            # K_p_drift_post_bend: 0.05,
+            # K_p_drift_pre_hodoscope: 0.05,
+            # K_p_m5a_length: 0.05,
+            # K_p_m5a_quad: 0.1,
+            # K_p_m5b_length: 0.05,
+            # K_p_m5b_quad: 0.1,
+            # K_p_shape_in_1: 0.0,
+            # K_p_shape_out_1: 0.0,
             K_p_bend_radius: 0.2021197079306207,
             K_p_bend_angle: 93.884579505768,
             K_p_drift_post_aperture: 0.001647845131336711,
@@ -57,6 +69,22 @@ class MRSIonOptics:
             K_p_m5b_quad: 0.1179451296465932,
             K_p_shape_in_1: -0.1249745550920304,
             K_p_shape_out_1: -0.10147496294559,
+            K_p_m5a_hex: 0.0,
+            K_p_m5a_oct: 0.0,
+            K_p_m5a_dec: 0.0,
+            K_p_m5a_dodec: 0.0,
+            K_p_m5b_hex: 0.0,
+            K_p_m5b_oct: 0.0,
+            K_p_m5b_dec: 0.0,
+            K_p_m5b_dodec: 0.0,
+            K_p_shape_in_2: 0.0,
+            K_p_shape_in_3: 0.0,
+            K_p_shape_in_4: 0.0,
+            K_p_shape_in_5: 0.0,
+            K_p_shape_out_2: 0.0,
+            K_p_shape_out_3: 0.0,
+            K_p_shape_out_4: 0.0,
+            K_p_shape_out_5: 0.0,
         }
         self.config = {}
         self.config_order(1)
@@ -84,6 +112,7 @@ class MRSIonOptics:
         n_max=1000,
         algorithm=FIT_ALGO_NEWTONS_METHOD,
         tolerance=1e-5,
+        fit_objective_beamsize=False,
     ):
         enabled = len(fit_args) > 0
         self.config["do_fit"] = enabled
@@ -93,6 +122,7 @@ class MRSIonOptics:
         self.config["fit_n_max"] = n_max
         self.config["fit_algorithm"] = algorithm
         self.config["fit_tolerance"] = tolerance
+        self.config["fit_objective_beamsize"] = fit_objective_beamsize
         return self
 
     def disable_fit(self):
@@ -139,6 +169,30 @@ class MRSIonOptics:
         else:
             beamsize = None
         return parameter_values, outputs, transfer_map, beamsize
+
+    def exec_async(self, use_gui=False, main_fn_name: str | None = None):
+        join_cosy = cosy.read_sub_eval(
+            "./mrs_ion_optics.fox",
+            self.parameter_values | self.config | cosy.INCLUDE_UTILS,
+            use_gui,
+            main_fn_name,
+        )
+
+        def ret():
+            out = join_cosy()
+            parameter_values, out = cosy.parse_write_dict(out)
+            _, outputs, out = cosy.parse_write(out)
+            transfer_map, out = cosy.parse_transfer_map(out)
+            if self.do_beamsize:
+                beamsize: list[npt.NDArray] | None = []
+                for _ in range(6):
+                    _, beamsize_v, out = cosy.parse_write(out)
+                    beamsize.append(beamsize_v)
+            else:
+                beamsize = None
+            return parameter_values, outputs, transfer_map, beamsize
+
+        return ret
 
     def exec_svg(self):
         self.exec(main_fn_name="main_svg")

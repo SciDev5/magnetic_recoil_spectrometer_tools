@@ -47,6 +47,9 @@ def eval_fox(
     __current_eval_ids.add(eval_id)
 
     output_file = fs.path.join(__cosy_cwd, f"./{eval_id}.txt")
+
+    with open(output_file, "w", encoding="utf8") as f:
+        pass
     content = (
         f"""
         INCLUDE 'COSY';

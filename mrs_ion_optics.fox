@@ -184,7 +184,9 @@ PROCEDURE main_common;
 
             UNITY_MAP;
             CLEAR_RAYS;
-            { gen_rays; }
+            IF {{fit_objective_beamsize}};
+                gen_rays;
+            ENDIF;
             elt_spectrogram;
 
             
@@ -202,6 +204,9 @@ PROCEDURE main_common;
             { obj := ME(1,1)+4*ME(1,2); }
             { obj := ABS(ME(1,1))+10*ABS(ME(1,2)); }
             obj := ME(1,2);
+            IF {{fit_objective_beamsize}};
+                obj := (VMAX(RAY(1))-VMIN(RAY(1)))/2;
+            ENDIF;
 
             { IF   p_drift_post_aperture<0.075; obj := obj + ( 0.075 - p_drift_post_aperture ) * 10  ; ENDIF;
             IF        p_drift_pre_bend<0.001; obj := obj + ( 0.001 - p_drift_pre_bend      ) * 1000; ENDIF;
