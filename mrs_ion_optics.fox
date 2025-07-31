@@ -16,6 +16,8 @@ VARIABLE shape_zero 1 5;
 VARIABLE p_bend_radius 1;
 VARIABLE p_bend_angle 1;
 VARIABLE p_drift_post_aperture 1;
+VARIABLE p_drift_m5a_m5b 1;
+VARIABLE p_drift_m5c_m5d 1;
 VARIABLE p_drift_pre_bend 1;
 VARIABLE p_drift_post_bend 1;
 VARIABLE p_drift_pre_hodoscope 1;
@@ -31,6 +33,18 @@ VARIABLE p_m5b_hex 1;
 VARIABLE p_m5b_oct 1;
 VARIABLE p_m5b_dec 1;
 VARIABLE p_m5b_dodec 1;
+VARIABLE p_m5c_length 1;
+VARIABLE p_m5c_quad 1;
+VARIABLE p_m5c_hex 1;
+VARIABLE p_m5c_oct 1;
+VARIABLE p_m5c_dec 1;
+VARIABLE p_m5c_dodec 1;
+VARIABLE p_m5d_length 1;
+VARIABLE p_m5d_quad 1;
+VARIABLE p_m5d_hex 1;
+VARIABLE p_m5d_oct 1;
+VARIABLE p_m5d_dec 1;
+VARIABLE p_m5d_dodec 1;
 
 VARIABLE obj 1;
 
@@ -69,15 +83,25 @@ PROCEDURE elt_spectrogram;
         p_m5a_length
         p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
+    ELT_DRIFT_LENGTH p_drift_m5a_m5b;
+    ELT_MULTIPOLE_5 
+        p_m5b_length
+        p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
+        0.05;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
     ELT_BENDING
         p_bend_radius p_bend_angle 0.075
         IDK_WHAT_THIS_DOES shape_in shape_out 5;
     ELT_DRIFT_LENGTH p_drift_post_bend;
     ELT_MULTIPOLE_5 
-        p_m5b_length
-        p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
+        p_m5c_length
+        p_m5c_quad p_m5c_hex p_m5c_oct p_m5c_dec p_m5c_dodec
         0.05;
+    { ELT_DRIFT_LENGTH p_drift_m5c_m5d;
+    ELT_MULTIPOLE_5 
+        p_m5d_length
+        p_m5d_quad p_m5d_hex p_m5d_oct p_m5d_dec p_m5d_dodec
+        0.05; }
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
     
     ELT_APERTURE 0.05; {for scoping hodoscope size}
@@ -112,6 +136,11 @@ PROCEDURE beamsize_elt_spectrogram;
         p_m5a_length
         p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
+    ELT_DRIFT_LENGTH p_drift_m5a_m5b;
+    ELT_MULTIPOLE_5 
+        p_m5b_length
+        p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
+        0.05;
     beamsize;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
     beamsize;
@@ -122,9 +151,14 @@ PROCEDURE beamsize_elt_spectrogram;
     ELT_DRIFT_LENGTH p_drift_post_bend;
     beamsize;
     ELT_MULTIPOLE_5 
-        p_m5b_length
-        p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
-        0.025;
+        p_m5c_length
+        p_m5c_quad p_m5c_hex p_m5c_oct p_m5c_dec p_m5c_dodec
+        0.05;
+    { ELT_DRIFT_LENGTH p_drift_m5c_m5d;
+    ELT_MULTIPOLE_5 
+        p_m5d_length
+        p_m5d_quad p_m5d_hex p_m5d_oct p_m5d_dec p_m5d_dodec
+        0.05; }
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
     beamsize;
     ELT_APERTURE 0.05; {for scoping hodoscope size}
@@ -172,15 +206,30 @@ PROCEDURE main_common;
     p_shape_out_3 := {{p_shape_out_3}};
     p_shape_out_4 := {{p_shape_out_4}};
     p_shape_out_5 := {{p_shape_out_5}};
+    p_drift_m5a_m5b := {{p_drift_m5a_m5b}};
+    p_m5c_length := {{p_m5c_length}};
+    p_m5c_quad := {{p_m5c_quad}};
+    p_m5c_hex := {{p_m5c_hex}};
+    p_m5c_oct := {{p_m5c_oct}};
+    p_m5c_dec := {{p_m5c_dec}};
+    p_m5c_dodec := {{p_m5c_dodec}};
+    p_drift_m5c_m5d := {{p_drift_m5c_m5d}};
+    p_m5d_length := {{p_m5d_length}};
+    p_m5d_quad := {{p_m5d_quad}};
+    p_m5d_hex := {{p_m5d_hex}};
+    p_m5d_oct := {{p_m5d_oct}};
+    p_m5d_dec := {{p_m5d_dec}};
+    p_m5d_dodec := {{p_m5d_dodec}};
 
     IF {{do_fit}};
         FIT {{fit_args}};
-            IF p_bend_radius<0.001; p_bend_radius := 0.001; ENDIF;
+            { IF p_bend_radius<0.001; p_bend_radius := 0.001; ENDIF;
             IF p_drift_post_aperture<0.05; p_drift_post_aperture := 0.05; ENDIF;
-            IF p_drift_pre_bend<0.001; p_drift_pre_bend := 0.001; ENDIF;
-            IF p_drift_pre_hodoscope<0.001; p_drift_pre_hodoscope := 0.001; ENDIF;
-            IF p_m5a_length<0.01; p_m5a_length := 0.01; ENDIF;
-            IF p_m5b_length<0.01; p_m5b_length := 0.01; ENDIF;
+            IF p_drift_pre_bend<0.001; p_drift_pre_bend := 0.001; ENDIF; }
+            IF p_drift_pre_hodoscope<0.2; p_drift_pre_hodoscope := 0.2; ENDIF;
+            IF p_drift_pre_hodoscope>0.5; p_drift_pre_hodoscope := 0.5; ENDIF;
+            { IF p_m5a_length<0.01; p_m5a_length := 0.01; ENDIF;
+            IF p_m5b_length<0.01; p_m5b_length := 0.01; ENDIF; }
 
             UNITY_MAP;
             CLEAR_RAYS;
@@ -263,6 +312,20 @@ PROCEDURE main_common;
     WRITE 0 'p_shape_out_3' p_shape_out_3;
     WRITE 0 'p_shape_out_4' p_shape_out_4;
     WRITE 0 'p_shape_out_5' p_shape_out_5;
+    WRITE 0 'p_drift_m5a_m5b' p_drift_m5a_m5b;
+    WRITE 0 'p_m5c_length' p_m5c_length;
+    WRITE 0 'p_m5c_quad' p_m5c_quad;
+    WRITE 0 'p_m5c_hex' p_m5c_hex;
+    WRITE 0 'p_m5c_oct' p_m5c_oct;
+    WRITE 0 'p_m5c_dec' p_m5c_dec;
+    WRITE 0 'p_m5c_dodec' p_m5c_dodec;
+    WRITE 0 'p_drift_m5c_m5d' p_drift_m5c_m5d;
+    WRITE 0 'p_m5d_length' p_m5d_length;
+    WRITE 0 'p_m5d_quad' p_m5d_quad;
+    WRITE 0 'p_m5d_hex' p_m5d_hex;
+    WRITE 0 'p_m5d_oct' p_m5d_oct;
+    WRITE 0 'p_m5d_dec' p_m5d_dec;
+    WRITE 0 'p_m5d_dodec' p_m5d_dodec;
     WRITE 0 '';
     WRITE 0 'outputs' {{outputs}};
     WRITE 0 '';

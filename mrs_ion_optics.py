@@ -11,6 +11,8 @@ import acceptance
 K_p_bend_radius = "p_bend_radius"
 K_p_bend_angle = "p_bend_angle"
 K_p_drift_post_aperture = "p_drift_post_aperture"
+K_p_drift_m5a_m5b = "p_drift_m5a_m5b"
+K_p_drift_m5c_m5d = "p_drift_m5c_m5d"
 K_p_drift_pre_bend = "p_drift_pre_bend"
 K_p_drift_post_bend = "p_drift_post_bend"
 K_p_drift_pre_hodoscope = "p_drift_pre_hodoscope"
@@ -26,6 +28,18 @@ K_p_m5b_hex = "p_m5b_hex"
 K_p_m5b_oct = "p_m5b_oct"
 K_p_m5b_dec = "p_m5b_dec"
 K_p_m5b_dodec = "p_m5b_dodec"
+K_p_m5c_length = "p_m5c_length"
+K_p_m5c_quad = "p_m5c_quad"
+K_p_m5c_hex = "p_m5c_hex"
+K_p_m5c_oct = "p_m5c_oct"
+K_p_m5c_dec = "p_m5c_dec"
+K_p_m5c_dodec = "p_m5c_dodec"
+K_p_m5d_length = "p_m5d_length"
+K_p_m5d_quad = "p_m5d_quad"
+K_p_m5d_hex = "p_m5d_hex"
+K_p_m5d_oct = "p_m5d_oct"
+K_p_m5d_dec = "p_m5d_dec"
+K_p_m5d_dodec = "p_m5d_dodec"
 K_p_shape_in_1 = "p_shape_in_1"
 K_p_shape_in_2 = "p_shape_in_2"
 K_p_shape_in_3 = "p_shape_in_3"
@@ -57,30 +71,44 @@ class MRSIonOptics:
             # K_p_m5b_quad: 0.1,
             # K_p_shape_in_1: 0.0,
             # K_p_shape_out_1: 0.0,
-            K_p_bend_radius: 0.2021197079306207,
-            K_p_bend_angle: 93.884579505768,
-            K_p_drift_post_aperture: 0.001647845131336711,
-            K_p_drift_pre_bend: 0.08264476762309475,
-            K_p_drift_post_bend: 0.07893060501596277,
-            K_p_drift_pre_hodoscope: 0.07422094266888424,
-            K_p_m5a_length: 0.06981600194372625,
-            K_p_m5a_quad: 0.1293780028644797,
-            K_p_m5b_length: 0.06928842409139782,
-            K_p_m5b_quad: 0.1179451296465932,
-            K_p_shape_in_1: -0.1249745550920304,
-            K_p_shape_out_1: -0.10147496294559,
+            K_p_bend_radius: 0.55,
+            K_p_bend_angle: 70,
+            K_p_drift_post_aperture: 0.1,
+            K_p_drift_m5a_m5b: 0.1,
+            K_p_drift_m5c_m5d: 0.1,
+            K_p_drift_pre_bend: 0.1,
+            K_p_drift_post_bend: 0.1,
+            K_p_drift_pre_hodoscope: 0.1,
+            K_p_m5a_length: 0.05,
+            K_p_m5a_quad: 0.0,
             K_p_m5a_hex: 0.0,
             K_p_m5a_oct: 0.0,
             K_p_m5a_dec: 0.0,
             K_p_m5a_dodec: 0.0,
+            K_p_m5b_length: 0.05,
+            K_p_m5b_quad: 0.0,
             K_p_m5b_hex: 0.0,
             K_p_m5b_oct: 0.0,
             K_p_m5b_dec: 0.0,
             K_p_m5b_dodec: 0.0,
+            K_p_m5c_length: 0.05,
+            K_p_m5c_quad: 0.0,
+            K_p_m5c_hex: 0.0,
+            K_p_m5c_oct: 0.0,
+            K_p_m5c_dec: 0.0,
+            K_p_m5c_dodec: 0.0,
+            K_p_m5d_length: 0.05,
+            K_p_m5d_quad: 0.0,
+            K_p_m5d_hex: 0.0,
+            K_p_m5d_oct: 0.0,
+            K_p_m5d_dec: 0.0,
+            K_p_m5d_dodec: 0.0,
+            K_p_shape_in_1: 0.0,
             K_p_shape_in_2: 0.0,
             K_p_shape_in_3: 0.0,
             K_p_shape_in_4: 0.0,
             K_p_shape_in_5: 0.0,
+            K_p_shape_out_1: 0.0,
             K_p_shape_out_2: 0.0,
             K_p_shape_out_3: 0.0,
             K_p_shape_out_4: 0.0,
