@@ -22,7 +22,7 @@ def run_sim():
         )
         x_srem[:, 0] *= MeV  #  MeV  ->  J
         x_srem[:, 1] *= x_density * 100 * MeV  #  MeV cm^2 / g  ->  J / m
-        x_srem[:, 1] *= 0  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # x_srem[:, 1] *= 0  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         x_srem: SRXMData = x_srem[:, 0], x_srem[:, 1]
 
     x_crosssection_compton = gen_cross_section_compton(
@@ -85,7 +85,7 @@ def run_sim():
     # plt.hist([en[i == 0] / MeV, en[i == 1] / MeV], bins=250, stacked=True)
     plt.hist([en[i == 0] / MeV, en[i == 1] / MeV], bins=int(16 / 0.150), stacked=True)
     plt.title(
-        f"post-aperture electron energy\n[{material_name[0].upper()}{material_name[1:]} {x_depth_mm}mm; foil r={R_FOIL/0.01}cm, drift {DIST_APERTURE/0.01}cm, aperture r={R_APERTURE}]"
+        f"post-aperture electron energy\n[{material_name[0].upper()}{material_name[1:]} {x_depth_mm}mm; foil r={R_FOIL/0.01}cm, drift {DIST_APERTURE/0.01}cm, aperture r={R_APERTURE/0.01}cm]"
     )
     plt.legend(["compton", "pair production"])
     plt.xlabel("electron energy /MeV")
@@ -97,7 +97,7 @@ def run_sim():
 
 
 R_FOIL = 0.015
-R_APERTURE = 0.025
+R_APERTURE = 0.015
 DIST_APERTURE = 0.25
 x_depth_mm = 2.5e-1
 N_BY_Z = 1_000_000_000
