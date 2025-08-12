@@ -1,4 +1,6 @@
-""" """
+"""
+Contains a list of several physically relevant constants.
+"""
 
 classical_electron_radius = 2.81794032e-15  # [m]
 elec_rest_energy = 8.1871057880e-14  # [J]

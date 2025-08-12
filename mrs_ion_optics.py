@@ -1,4 +1,7 @@
-""" """
+"""
+Contains a combined implementation of the ion optics system for a system with up to
+four quadrupoles and a dipole.
+"""
 
 import os
 
@@ -53,6 +56,11 @@ K_p_shape_out_5 = "p_shape_out_5"
 
 
 class MRSIonOptics:
+    """
+    Implementation of the ion optics system for a system with up to
+    four quadrupoles and a dipole.
+    """
+
     FIT_ALGO_SYMPLECTIC = 1
     FIT_ALGO_NEWTONS_METHOD = 4
     FIT_ALGO_SIMULATED_ANNEAL = 3
@@ -121,14 +129,27 @@ class MRSIonOptics:
         self.config_vis_lab_coordinates(True)
 
     def config_order(self, order: int):
+        """
+        Set the order of the taylor map used to calucalte the ion-optics.
+        """
         self.config["order"] = order
         return self
 
     def config_vis_lab_coordinates(self, vis_lab_coordinates: bool):
+        """
+        Configure the spectrometer visualization to use real-world coordinates.
+        """
         self.config["pty_value"] = 1 if vis_lab_coordinates else 0
         return self
 
     def config_outputs(self, outputs: list[str], do_beamsize=False):
+        """
+        Pass in a list of COSYScript expressions (mustn't have spaces) that will be
+        used to calculate the outputs of the execution.
+        """
+        for output in outputs:
+            if " " in output:
+                raise ValueError("COSYScript expression may not contain spaces.")
         self.config["outputs"] = " ".join(outputs)
         self.do_beamsize = do_beamsize
         self.config["do_beamsize"] = do_beamsize
@@ -142,6 +163,9 @@ class MRSIonOptics:
         tolerance=1e-5,
         fit_objective_beamsize=False,
     ):
+        """
+        Configure the fitting / parameter optimization of the spectrometer.
+        """
         enabled = len(fit_args) > 0
         self.config["do_fit"] = enabled
         # if fit disabled, put dummy there so it still compiles
@@ -154,10 +178,16 @@ class MRSIonOptics:
         return self
 
     def disable_fit(self):
+        """
+        Disable parameter fitting in mrs_ion_optics.fox
+        """
         self.config["do_fit"] = False
         return self
 
     def set_rays(self, rays: acceptance.RaysXAYBERelative, color=1):
+        """
+        Set the charged particle rays input into the COSY system.
+        """
         self.config["input_rays"] = acceptance.relative_rays_into_cosyscript(
             rays,
             color,
@@ -165,6 +195,9 @@ class MRSIonOptics:
         return self
 
     def add_rays(self, rays: acceptance.RaysXAYBERelative, color=1):
+        """
+        Add additional charged particle rays input into the COSY system.
+        """
         self.config["input_rays"] += acceptance.relative_rays_into_cosyscript(
             rays,
             color,
@@ -172,14 +205,50 @@ class MRSIonOptics:
         return self
 
     def set_parameters(self, parameter_values: dict[str, float]):
+        """
+        Directly set the spectrometer's parameters. (see variables at the
+        head of this file starting with `K_p_...`).
+
+        Example:
+        ```python
+        sess = MRSIonOptics()
+        sess.set_parameters({
+            K_p_bend_radius: 0.55,
+            K_p_bend_angle: 70,
+            K_p_drift_post_aperture: 0.1,
+            ...
+        })
+        ```
+        """
         self.parameter_values = parameter_values
         return self
 
     def set_parameter(self, key: str, value: float):
+        """
+        Directly set a spectrometer parameters. (see variables at the
+        head of this file starting with `K_p_...`).
+
+        Example:
+        ```python
+        sess = MRSIonOptics()
+        sess.set_parameter(K_p_bend_radius, 0.55)
+        ```
+        """
         self.parameter_values[key] = value
         return self
 
     def exec(self, use_gui=False, main_fn_name: str | None = None):
+        """
+        Runs the spectrometer simulation and returns its outputs.
+
+        Returns a tuple:
+        - parameter values
+        - outputs from config_outputs
+        - transfer map function
+        - beam size
+
+        With use_gui set to true, the default COSY interface will be shown.
+        """
         out = cosy.read_sub_eval(
             "./mrs_ion_optics.fox",
             self.parameter_values | self.config | cosy.INCLUDE_UTILS,
@@ -199,6 +268,29 @@ class MRSIonOptics:
         return parameter_values, outputs, transfer_map, beamsize
 
     def exec_async(self, use_gui=False, main_fn_name: str | None = None):
+        """
+        Runs the spectrometer simulation and returns immediately with
+        a function, that when called, waits for the simulation to
+        complete and returns its outputs.
+
+        The returned function returns a tuple:
+        - parameter values
+        - outputs from config_outputs
+        - transfer map function
+        - beam size
+
+        With use_gui set to true, the default COSY interface will be shown.
+
+        Example:
+        ```python
+        sess = MRSIonOptics()
+        processes = [sess.exec_async() for x in range(10)]
+        for join_process in processes
+            parameter_values, _, _, _ = join_process()
+            print(parameter_values)
+        ```
+
+        """
         join_cosy = cosy.read_sub_eval(
             "./mrs_ion_optics.fox",
             self.parameter_values | self.config | cosy.INCLUDE_UTILS,
@@ -223,6 +315,20 @@ class MRSIonOptics:
         return ret
 
     def exec_svg(self):
+        """
+        Execute the spectrometer simulation, but render it to SVG data instead of to the screen.
+
+        Example for displaying COSY outputs in a jupyter notebook:
+        ```python
+        from IPython.core.display import SVG, display_svg
+
+        sess = MRSIonOptics()
+        ...
+        sess.set_rays(gen_charictaristic_rays(R_FOIL, L_DRIFT, R_APERTURE, n=3), color=6)
+        for svg_data in sess.exec_svg():
+            display_svg(SVG(data=svg_data))
+        ```
+        """
         self.exec(main_fn_name="main_svg")
         with open(
             os.path.join(os.path.dirname(__file__), "./cosy/eval/pic001.svg"),
@@ -239,6 +345,9 @@ class MRSIonOptics:
         return pic_0, pic_1
 
     def exec_fit(self, use_gui=False, disable_fit=True):
+        """
+        Call `self.exec`, adopt the fit parameters, then disable parameter fitting.
+        """
         parameter_values, outputs, transfer_map, beamsize = self.exec(use_gui=use_gui)
         self.set_parameters(parameter_values)
         if disable_fit:
@@ -246,6 +355,9 @@ class MRSIonOptics:
         return outputs, transfer_map, beamsize
 
     def print_params(self):
+        """
+        Format and print all spectrometer parameters to the console.
+        """
         for k in self.parameter_values.keys():
             placehold = "[fit]"
             print(

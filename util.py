@@ -1,4 +1,7 @@
-""" """
+"""
+Contains a list of useful utility functions for calculus, randomness,
+and general tooling that support the rest of the implementation.
+"""
 
 import typing as ty
 import time
@@ -11,14 +14,29 @@ import numpy.typing as npt
 
 
 def d_(x: npt.NDArray) -> npt.NDArray:
+    """
+    Take the difference of the first two elements in an array.
+
+    Used as an approximation for dx when integrating.
+    """
     return x[1] - x[0]
 
 
 def dsolid_dangle(a: npt.NDArray) -> npt.NDArray:
+    """
+    Partial derivative of a differential solid angle over a
+    differential latitudinal angle (integrating over constant
+    longidudinal angle, leading to the factor of 2pi).
+    """
     return 2 * np.pi * np.sin(a)
 
 
 def dsolid_dspherical(a: npt.NDArray) -> npt.NDArray:
+    """
+    Partial derivative of a differential solid angle over a
+    differential latitudinal angle (not including the
+    longidudinal angle).
+    """
     return np.sin(a)
 
 
@@ -30,6 +48,10 @@ rng = np.random.default_rng()
 
 # [i], [j], [i, j, ..] -> [i, ..]
 def interp2(x: npt.ArrayLike, xp: npt.ArrayLike, fp: npt.ArrayLike) -> npt.NDArray:
+    """
+    Interpolate each `x[i]` from the monotonically increasing `xp[j]` into the range `fp[i, j]`,
+    returning the `i` interpolated values of `x`. (There is one fp target range for each x input).
+    """
     # https://stackoverflow.com/questions/43772218/fastest-way-to-use-numpy-interp-on-a-2-d-array
     x = np.array(x)
     xp = np.array(xp)
@@ -51,6 +73,10 @@ def interp2(x: npt.ArrayLike, xp: npt.ArrayLike, fp: npt.ArrayLike) -> npt.NDArr
 
 # [i], [j], [j, ..] -> [i, ..]
 def interpx(x: npt.ArrayLike, xp: npt.ArrayLike, fp: npt.ArrayLike) -> npt.NDArray:
+    """
+    Interpolate each `x[i]` from the monotonically increasing `xp[j]` into the range `fp[j]`,
+    returning the `i` interpolated values of `x`.
+    """
     # https://stackoverflow.com/questions/43772218/fastest-way-to-use-numpy-interp-on-a-2-d-array
     x = np.array(x)
     xp = np.array(xp)
@@ -73,12 +99,18 @@ def interpx(x: npt.ArrayLike, xp: npt.ArrayLike, fp: npt.ArrayLike) -> npt.NDArr
 def sample_dists(
     dists: npt.NDArray, out_range: npt.NDArray | None = None
 ) -> npt.NDArray:
+    """
+    Sample a point from each distribution provided, remapped to the range of out_range, if provided.
+    """
     if out_range is None:
         out_range = np.arange(dists.shape[1])
     return np.array([np.interp(rng.random(), dist, out_range) for dist in dists])
 
 
 def normalize_axis(x_in: npt.ArrayLike, axis: int) -> npt.NDArray:
+    """
+    Force the data to range from 0 to 1 along the given axis.
+    """
     x = np.array(x_in)
     axes = np.array(range(len(x.shape)))
     axes[[0, axis]] = axes[[axis, 0]]
@@ -97,6 +129,15 @@ def prep_distr_1_2(
     distr_axis_0_range: npt.NDArray,  # [distr_axis_0]
     distr_axis_1_range: npt.NDArray,  # [distr_axis_1]
 ) -> Distr_1_2:
+    """
+    Prepares a probability distribution with one variable input argument and two randomized outputs.
+
+    Converts the distribution into an object that makes sampling efficient.
+
+    - `arg_range`: the range of values which the input argument may take.
+    - `distr_axis_<N>_range`: the possible range of outputs corresponding to
+      the `<N>`th axis of the distribution
+    """
     dist_0 = normalize_axis(np.cumsum(dist.sum(axis=(2,)), axis=1), axis=1)
     dist_1 = normalize_axis(dist.cumsum(axis=2), axis=2)
     return dist_0, dist_1, arg_range, distr_axis_0_range, distr_axis_1_range
@@ -107,6 +148,12 @@ def sample_distr_1_2(
     dist_1_2: Distr_1_2,
     argument: float,
 ) -> tuple[npt.NDArray, npt.NDArray]:
+    """
+    Samples `count` samples from from a distribution generated with `prep_distr_1_2`, with the
+    input argument set to the single float value of `argument`.
+
+    Returns two arrays both with shape `(count,)` containing the randomly sampled values.
+    """
     dist_0, dist_1, arg_range, distr_axis_0_range, distr_axis_1_range = dist_1_2
 
     dist_0_interpolated: npt.NDArray = interpx(
@@ -136,6 +183,15 @@ def prep_distr_1_1(
     arg_range: npt.NDArray,  # [arg_axis]
     distr_axis_0_range: npt.NDArray,  # [distr_axis_0]
 ) -> Distr_1_1:
+    """
+    Prepares a probability distribution with one variable input argument and one randomized output.
+
+    Converts the distribution into an object that makes sampling efficient.
+
+    - `arg_range`: the range of values which the input argument may take.
+    - `distr_axis_<N>_range`: the possible range of outputs corresponding to
+      the `<N>`th axis of the distribution
+    """
     return (
         normalize_axis(np.cumsum(dist, axis=1), axis=1),
         arg_range,
@@ -148,6 +204,12 @@ def sample_distr_1_1(
     dist: Distr_1_1,
     argument: float,
 ) -> npt.NDArray:
+    """
+    Samples `count` samples from from a distribution generated with `prep_distr_1_1`, with the
+    input argument set to the single float value of `argument`.
+
+    Returns an array with shape `(count,)` containing the randomly sampled values.
+    """
     dist_0, arg_range, distr_axis_0_range = dist
     dist_interpolated: npt.NDArray = interpx(
         [argument],
@@ -163,6 +225,15 @@ def sample_distr_1_1(
 
 
 def random_partition(rel_probabilities: npt.ArrayLike, count: int) -> npt.NDArray:
+    """
+    Simulates how `count` events end up in N bins given the relative probability
+    `rel_probabilities[i]` of landing each bin.
+
+    - `rel_probabilities`: A 1 dimensional array of length N
+
+    Returns a 1d array with the same length as `rel_probabilities` containing the counts
+    for each bin. (Total sums to `count`).
+    """
     out = []
     rel_probabilities = np.array(rel_probabilities)
     rel_probabilities /= rel_probabilities.sum()
@@ -184,11 +255,42 @@ def random_partition(rel_probabilities: npt.ArrayLike, count: int) -> npt.NDArra
 def begin_timer(
     text: str,
 ) -> ty.Callable[[float], None]:
+    """
+    Sets up the task completion time logging system.
+
+    For example,
+
+    ```python
+    tick = begin_timer("my long task")
+    for i in range(100):
+        sleep(1)
+        tick((i+1)/100)
+    ```
+
+    produces the following output:
+
+    .. code-block::
+        [13:35:14]  my long task:  1.0%  1.0s/100.2s  ETA: 13:36:53 [T-99.2s]
+        [13:35:16]  my long task:  3.0%  3.0s/100.2s  ETA: 13:36:53 [T-97.2s]
+        [13:35:19]  my long task:  6.0%  6.0s/100.2s  ETA: 13:36:53 [T-94.2s]
+        [13:35:23]  my long task:  10.0%  10.0s/100.2s  ETA: 13:36:53 [T-90.2s]
+        [13:35:29]  my long task:  16.0%  16.0s/100.1s  ETA: 13:36:53 [T-84.1s]
+        [13:35:37]  my long task:  24.0%  24.0s/100.1s  ETA: 13:36:53 [T-76.1s]
+        [13:35:49]  my long task:  36.0%  36.0s/100.1s  ETA: 13:36:53 [T-64.1s]
+        [13:36:07]  my long task:  54.0%  54.1s/100.1s  ETA: 13:36:53 [T-46.0s]
+        [13:36:33]  my long task:  80.0%  80.1s/100.1s  ETA: 13:36:53 [T-20.0s]
+        [13:36:53]  my long task complete in 100.112s
+
+
+    """
     t_start = time.time()
     done = [False]
     did_tick = [False]
 
     def fmt_duration(duration_seconds: float, decimals=1) -> str:
+        """
+        Helper function that writes a time in seconds in the most natural way possible.
+        """
         if duration_seconds < 0.5:
             return f"{np.round(duration_seconds*1e3,decimals)}ms"
         if duration_seconds < 60 * 2:
@@ -202,6 +304,11 @@ def begin_timer(
         return f"{np.round(duration_seconds/60/60/24/365.24,decimals)}yrs"
 
     def print_state(complete: float):
+        """
+        Writes the timer state.
+        Prints progress with time, percent complete and ETA if unfinished.
+        Prints total time elapsed when complete.
+        """
         elapsed = time.time() - t_start
         total_time_est = np.round(elapsed / complete, decimals=1)
         show_date = total_time_est > 60 * 60 * 12  # more than 12 hours
@@ -214,14 +321,20 @@ def begin_timer(
             )
         else:
             print(
-                f"[{now_time_fmt}]  {text}:  {np.round(complete * 100, decimals=2)}%  {fmt_duration(elapsed)}/{fmt_duration(total_time_est)}  ETA: {end_time_fmt} [T-{fmt_duration(total_time_est-elapsed)}]"
+                f"[{now_time_fmt}]  {text}:  {np.round(complete * 100, decimals=2)}%  "
+                + f"{fmt_duration(elapsed)}/{fmt_duration(total_time_est)}  "
+                + f"ETA: {end_time_fmt} [T-{fmt_duration(total_time_est-elapsed)}]"
             )
 
     t_next_update_delay = [1]
     t_next_update = [time.time() + t_next_update_delay[0]]
 
     def tick(complete: float):
-        if done[0] or not (complete >= 0):
+        """
+        The closure returned to the caller that
+        Determines how often print_state is called.
+        """
+        if done[0] or not complete >= 0:
             return
         if complete >= 1 and did_tick[0]:
             done[0] = True

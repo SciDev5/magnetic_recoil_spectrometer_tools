@@ -1,4 +1,7 @@
-""" """
+"""
+Contains implementations for the total and differential
+cross sections for all relevant processes.
+"""
 
 import numpy as np
 import numpy.typing as npt
@@ -35,6 +38,19 @@ def gen_cross_section_compton(
     phot_out_angle_range: npt.NDArray,  # :: [angle/rad; m]
     override_total_csd: CrossSectionTableTotal | None = None,
 ) -> CrossSection:
+    """
+    Generate the cross-section data for the compton effect.
+
+    Requires:
+    - `phot_energy_range` linearly spaced range of values
+    for the input photons to be considered.
+    - `phot_out_angle_range` linearly spaced valid output angles
+    for the electron to exit at.
+
+    The atom number density of the material in question, and optionally an
+    array which overrides the total cross section.
+    """
+
     # /m
     def csd_total(energy_in: npt.NDArray) -> npt.NDArray:
         s0 = 6.651e-29  # m2
@@ -115,6 +131,18 @@ def calculate_pairproduction_cross_section(
     angle_elec: npt.NDArray,  # [rad]
     angle_inter: npt.NDArray,  # [rad]
 ) -> PairProductionRawCrossSection:
+    """
+    Calculates the raw precursor to the pair production cross-section data
+    (free of Z dependence), requires evenly spaced arrays to configure what
+    areas of parameter space to consider:
+    - `energy_gamma`: gamma input energy
+    - `energy_elec_frac`: fraction of kinetic energy given to the electron or positron
+    - `angle_posi`: off-beamline angle of positron
+    - `angle_elec`: off-beamline angle of electron
+    - `angle_inter`: angle between the planes formed by the beamline and the electron
+    and positron momenta.
+    ).
+    """
 
     def genarg(arg: npt.NDArray, axis: int) -> npt.NDArray:
         axes = {0, 1} - {axis}
@@ -244,6 +272,9 @@ def calculate_pairproduction_cross_section(
 def save_pairproduction_cross_section(
     filename: str, cross_section: PairProductionRawCrossSection
 ):
+    """
+    Saves the raw pair-production cross section to a file.
+    """
     d_sigma, (
         energy_gamma,
         energy_elec_frac,
@@ -261,6 +292,9 @@ def save_pairproduction_cross_section(
 def load_pairproduction_cross_section(
     filename: str,
 ) -> PairProductionRawCrossSection:
+    """
+    Read the raw pair-production cross section from a file.
+    """
     x = np.load(filename)
 
     d_sigma = x["d_sigma"]
@@ -280,6 +314,12 @@ def gen_cross_section_pairproduction(
     cross_section: PairProductionRawCrossSection,
     override_total_csd: CrossSectionTableTotal | None = None,
 ):
+    """
+    Generate the pair-production cross section from the raw Z-independent raw cross section.
+
+    Requires Z (atomic number), of the material in question, the atom number density,
+    and optionally an array which overrides the total cross section.
+    """
     d_sigma, (
         energy_gamma,
         energy_elec_frac,

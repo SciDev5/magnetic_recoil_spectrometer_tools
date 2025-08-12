@@ -1,4 +1,7 @@
-""" """
+"""
+Contains the procedures for simulating the conversion foil and
+aperture stage of the spectrometer.
+"""
 
 import typing as ty
 
@@ -39,6 +42,10 @@ RaysXAYBERelative = npt.NDArray
 def srxm_attenuate(
     energy_in: npt.ArrayLike, depth_in: npt.ArrayLike, srxm: SRXMData, n_steps=1000
 ) -> npt.NDArray:
+    """
+    Calculate the slowing for charged particles with given `energy_in` and `depth_in`
+    (depth until exiting material) using the slowing data table `srxm`.
+    """
     energy = np.array(energy_in)
     depth = np.array(depth_in)
     dx = depth / n_steps
@@ -56,6 +63,15 @@ def foil_trace(
     foil_properties: Foil,
     foil_depth: float,
 ) -> AngleEnergyId:
+    """
+    Simulates the number, energy, and direction of the charged scattering products of
+    `n_rays_incident` neutral rays with energy `phot_energy_in` through a foil with
+    `foil_properties` that is `foil_depth` meters thick.
+
+    Returns the angles, energies, and mechanism id of the produced charged rays. The
+    length of this array divided by `n_rays_incident` is the raw pre-aperture efficiency
+    of the system.
+    """
     srxm, cross_sections = foil_properties
     cross_section_density_totals = [
         cross_section[0](phot_energy_in) for cross_section in cross_sections
@@ -104,6 +120,14 @@ def aperture(
     aperature_offset: float,
     replication: int = 1,
 ) -> ThetaPhiXYEnergyId:
+    """
+    Accepts the output of `foil_trace` (`foil_electrons`), and using
+    the given `foil_radius`, `aperature_radius`, and `aperature_offset`,
+    filters the particles by whether they would pass through the aperture.
+
+    Returns the full angle, energy, and position of the particles at the
+    aperture plane.
+    """
     angle_in, energy_in, id_in = foil_electrons
     id_out = np.array([])
     angle_out = np.array([])
@@ -139,6 +163,11 @@ def rays_into_relative(
     rays: ThetaPhiXYEnergyId,
     center_energy: float,
 ) -> RaysXAYBERelative:
+    """
+    Converts `ThetaPhiXYEnergyId` to `RaysXAYBERelative`.
+    - converts absolute energy (`joules`) to relative `delta_E for E = E_0 * (1 + delta_E)`.
+    - converts angles to fractional vector off-beam-axis components.
+    """
     th, ph, x, y, e, _ = rays
     return np.transpose(
         np.array(
@@ -154,6 +183,10 @@ def rays_into_relative(
 
 
 def relative_rays_into_cosyscript(rays: RaysXAYBERelative, color=0) -> str:
+    """
+    Converts `RaysXAYBERelative` into COSYScript source code (to be injected
+    using the cosy module's substitution system.)
+    """
     return "\n".join(
         [
             f"SR {x} {a} {y} {b} 0 {e} 0 0 {color};"
@@ -167,6 +200,10 @@ def rays_to_cosyscript(
     center_energy: float,
     color=0,
 ) -> str:
+    """
+    Converts `aperture` output rays (`ThetaPhiXYEnergyId`) into COSYScript
+    source code (to be injected using the cosy module's substitution system.)
+    """
     return relative_rays_into_cosyscript(
         rays_into_relative(rays, center_energy),
         color,
