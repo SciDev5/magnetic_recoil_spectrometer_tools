@@ -61,12 +61,12 @@ PROCEDURE gen_rays;
     {{input_rays}}
 ENDPROCEDURE;
 
-PROCEDURE config_spectrogram;
+PROCEDURE config_spectrometer;
     CONFIG_ORDER_AND_VARIABLES {{order}} 3 0;
     CONFIG_AS_ELECTRON_BEAM 16;
 ENDPROCEDURE;
 
-PROCEDURE elt_spectrogram;
+PROCEDURE elt_spectrometer;
     shape_in(1) := p_shape_in_1;
     shape_in(2) := p_shape_in_2;
     shape_in(3) := p_shape_in_3;
@@ -78,36 +78,46 @@ PROCEDURE elt_spectrogram;
     shape_out(4) := p_shape_out_4;
     shape_out(5) := p_shape_out_5;
 
+    IF {{enable_multipole_a}};
     ELT_DRIFT_LENGTH p_drift_post_aperture;
     ELT_MULTIPOLE_5
         p_m5a_length
         p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
+    ENDIF;
+    IF {{enable_multipole_b}};
     ELT_DRIFT_LENGTH p_drift_m5a_m5b;
     ELT_MULTIPOLE_5 
         p_m5b_length
         p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
         0.05;
+    ENDIF;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
     ELT_BENDING
         p_bend_radius p_bend_angle 0.075
         IDK_WHAT_THIS_DOES shape_in shape_out 5;
     ELT_DRIFT_LENGTH p_drift_post_bend;
+    IF {{enable_multipole_c}};
     ELT_MULTIPOLE_5 
         p_m5c_length
         p_m5c_quad p_m5c_hex p_m5c_oct p_m5c_dec p_m5c_dodec
         0.05;
-    { ELT_DRIFT_LENGTH p_drift_m5c_m5d;
+    ENDIF;
+    IF {{enable_multipole_d}};
+    ELT_DRIFT_LENGTH p_drift_m5c_m5d;
     ELT_MULTIPOLE_5 
         p_m5d_length
         p_m5d_quad p_m5d_hex p_m5d_oct p_m5d_dec p_m5d_dodec
-        0.05; }
+        0.05;
+    ENDIF;
+    IF {{enable_multipole_c}};
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
+    ENDIF;
     
     ELT_APERTURE 0.05; {for scoping hodoscope size}
 ENDPROCEDURE;
 
-PROCEDURE beamsize_elt_spectrogram;
+PROCEDURE beamsize_elt_spectrometer;
     PROCEDURE beamsize;
         WRITE 0 'beamsize'
             (VMAX(RAY(1))-VMIN(RAY(1)))/2
@@ -130,17 +140,21 @@ PROCEDURE beamsize_elt_spectrogram;
     shape_zero(4) := 0;
     shape_zero(5) := 0;
 
+    IF {{enable_multipole_a}};
     ELT_DRIFT_LENGTH p_drift_post_aperture;
     beamsize;
     ELT_MULTIPOLE_5
         p_m5a_length
         p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
+    ENDIF;
+    IF {{enable_multipole_b}};
     ELT_DRIFT_LENGTH p_drift_m5a_m5b;
     ELT_MULTIPOLE_5 
         p_m5b_length
         p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
         0.05;
+    ENDIF;
     beamsize;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
     beamsize;
@@ -149,18 +163,24 @@ PROCEDURE beamsize_elt_spectrogram;
         IDK_WHAT_THIS_DOES shape_in shape_out 5;
     beamsize;
     ELT_DRIFT_LENGTH p_drift_post_bend;
+    IF {{enable_multipole_c}};
     beamsize;
     ELT_MULTIPOLE_5 
         p_m5c_length
         p_m5c_quad p_m5c_hex p_m5c_oct p_m5c_dec p_m5c_dodec
         0.05;
-    { ELT_DRIFT_LENGTH p_drift_m5c_m5d;
+    ENDIF;
+    IF {{enable_multipole_d}};
+    ELT_DRIFT_LENGTH p_drift_m5c_m5d;
     ELT_MULTIPOLE_5 
         p_m5d_length
         p_m5d_quad p_m5d_hex p_m5d_oct p_m5d_dec p_m5d_dodec
-        0.05; }
+        0.05;
+    ENDIF;
+    IF {{enable_multipole_c}};
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
     beamsize;
+    ENDIF;
     ELT_APERTURE 0.05; {for scoping hodoscope size}
 ENDPROCEDURE;
 
@@ -171,12 +191,12 @@ PROCEDURE prep_draw;
 	CLEAR_RAYS;
 	gen_rays;
 	DRAW_BEGIN_PATH;
-    elt_spectrogram;
+    elt_spectrometer;
 	DRAW_END_PATH;
 ENDPROCEDURE;
 
 PROCEDURE main_common;
-    config_spectrogram;
+    config_spectrometer;
 
     p_bend_radius := {{p_bend_radius}};
     p_bend_angle := {{p_bend_angle}};
@@ -236,7 +256,7 @@ PROCEDURE main_common;
             IF {{fit_objective_beamsize}};
                 gen_rays;
             ENDIF;
-            elt_spectrogram;
+            elt_spectrometer;
 
             
             { WW(1):= VMAX(RAY(1));
@@ -283,7 +303,7 @@ PROCEDURE main_common;
     UNITY_MAP;
     CLEAR_RAYS;
     gen_rays;
-    elt_spectrogram;
+    elt_spectrometer;
     WRITE 0 'p_bend_radius' p_bend_radius;
     WRITE 0 'p_bend_angle' p_bend_angle;
     WRITE 0 'p_drift_post_aperture' p_drift_post_aperture;
@@ -336,7 +356,7 @@ PROCEDURE main_common;
         UNITY_MAP;
         CLEAR_RAYS;
         gen_rays;
-        beamsize_elt_spectrogram;
+        beamsize_elt_spectrometer;
     ENDIF;
 ENDPROCEDURE;
 

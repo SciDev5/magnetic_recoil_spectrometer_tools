@@ -127,6 +127,7 @@ class MRSIonOptics:
         self.config_outputs([])
         self.config_fit([])
         self.config_vis_lab_coordinates(True)
+        self.enable_multipoles()
 
     def config_order(self, order: int):
         """
@@ -153,6 +154,36 @@ class MRSIonOptics:
         self.config["outputs"] = " ".join(outputs)
         self.do_beamsize = do_beamsize
         self.config["do_beamsize"] = do_beamsize
+        return self
+
+    def enable_multipoles(self, a=True, b=True, c=True, d=False):
+        """
+        Controls which multipole elements are enabled. (Default: A, B, C enabled; D disabled)
+
+        Note: B may only be enabled if A also is, and D may only be enabled if C also is.
+
+        Drift lengths enabled by magnets:
+        - Pre-bend:
+            - none: `p_drift_pre_bend`
+            - A: `p_drift_post_aperture`, `p_drift_pre_bend`
+            - A, B: `p_drift_post_aperture`, `p_drift_pre_bend`, `p_drift_m5a_m5b`
+        - Post-bend:
+            - none: `p_drift_post_bend`
+            - A: `p_drift_pre_hodoscope`, `p_drift_post_bend`
+            - A, B: `p_drift_pre_hodoscope`, `p_drift_post_bend`, `p_drift_m5c_m5d`
+        """
+        if b and not a:
+            raise ValueError(
+                "Enabling Multipole B requires Multipole A also being enabled."
+            )
+        if d and not c:
+            raise ValueError(
+                "Enabling Multipole D requires Multipole C also being enabled."
+            )
+        self.config["enable_multipole_a"] = a
+        self.config["enable_multipole_b"] = b
+        self.config["enable_multipole_c"] = c
+        self.config["enable_multipole_d"] = d
         return self
 
     def config_fit(
