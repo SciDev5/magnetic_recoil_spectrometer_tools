@@ -6,7 +6,7 @@ from cross_sections import (
     load_pairproduction_cross_section,
 )
 from acceptance import SRXMData, foil_trace, Foil, aperture
-from physical_constants import mol, MeV, millimeter
+from physical_constants import mol, MeV, millimeter, centimeter
 
 
 DO_PLOTS = input("show plots? [y/N]: ").lower().strip() in ["y", "yes", "true"]
@@ -21,7 +21,7 @@ def run_sim():
             [[float(y) for y in x.split(" ")[:2]] for x in srem.readlines()[9:]]
         )
         x_srem[:, 0] *= MeV  #  MeV  ->  J
-        x_srem[:, 1] *= x_density * 100 * MeV  #  MeV cm^2 / g  ->  J / m
+        x_srem[:, 1] *= x_density * MeV / centimeter  #  MeV cm^2 / g  ->  J / m
         # x_srem[:, 1] *= 0  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         x_srem: SRXMData = x_srem[:, 0], x_srem[:, 1]
 
