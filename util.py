@@ -348,3 +348,25 @@ def begin_timer(
         t_next_update[0] = time.time() + t_next_update_delay[0]
 
     return tick
+
+
+def full_width_half_max(x: npt.NDArray, n_bins=50):
+    """
+    Determine the Full Width at Half Max (FWHM) of a distribution given
+    an array of random samples of that distribution.
+
+    This function works by creating a histogram (ie bins/digitizes the
+    data), then calculating FWHM from there. `n_bins` determines the
+    resolution of the binning used to infer the shape of the distribution.
+
+    Produces invalid results for distributions with multiple peaks.
+    """
+    bins = np.linspace(np.min(x), np.max(x), n_bins)
+    bin_centers = (bins[1:] + bins[:-1]) / 2
+    x_sorted = np.digitize(x, bins)
+    xn = np.array([int(np.sum(x_sorted == i)) for i in range(1, len(bins))])
+    xn = xn / np.max(xn)
+    xmax = np.argmax(xn)
+    x0 = np.interp(0.5, xn[: xmax + 1], bin_centers[: xmax + 1])
+    x1 = np.interp(0.5, xn[xmax:][::-1], bin_centers[xmax:][::-1])
+    return x1 - x0
