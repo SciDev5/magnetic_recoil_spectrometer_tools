@@ -125,6 +125,7 @@ class MRSIonOptics:
         self.config = {}
         self.config_order(1)
         self.config_outputs([])
+        self.config_objective()
         self.config_fit([])
         self.config_vis_lab_coordinates(True)
         self.enable_multipoles()
@@ -134,6 +135,13 @@ class MRSIonOptics:
         Set the order of the taylor map used to calucalte the ion-optics.
         """
         self.config["order"] = order
+        return self
+
+    def config_objective(self, obj="ME(1,2)"):
+        """
+        Set the optimization objective for COSY to use.
+        """
+        self.config["fit_objective"] = obj
         return self
 
     def config_vis_lab_coordinates(self, vis_lab_coordinates: bool):

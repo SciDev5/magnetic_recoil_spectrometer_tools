@@ -55,6 +55,11 @@ VARIABLE CENTER 1;
 
 VARIABLE do_vis 1;
 
+VARIABLE maxme11 1;
+VARIABLE maxme12 1;
+VARIABLE maxme31 1;
+VARIABLE maxme32 1;
+
 {{INCLUDE_UTILS}}
 
 PROCEDURE gen_rays;
@@ -66,6 +71,12 @@ PROCEDURE config_spectrometer;
     CONFIG_AS_ELECTRON_BEAM 16;
 ENDPROCEDURE;
 
+PROCEDURE update_maxme;
+    maxme11 := MAX(maxme11, ABS(ME(1,1)));
+    maxme12 := MAX(maxme12, ABS(ME(1,2)));
+    maxme31 := MAX(maxme31, ABS(ME(3,1)));
+    maxme32 := MAX(maxme32, ABS(ME(3,2)));
+ENDPROCEDURE;
 PROCEDURE elt_spectrometer;
     shape_in(1) := p_shape_in_1;
     shape_in(2) := p_shape_in_2;
@@ -78,40 +89,56 @@ PROCEDURE elt_spectrometer;
     shape_out(4) := p_shape_out_4;
     shape_out(5) := p_shape_out_5;
 
+    maxme11 := 0.0;
+    maxme12 := 0.0;
+    maxme31 := 0.0;
+    maxme32 := 0.0;
+
     IF {{enable_multipole_a}};
     ELT_DRIFT_LENGTH p_drift_post_aperture;
+    update_maxme;
     ELT_MULTIPOLE_5
         p_m5a_length
         p_m5a_quad p_m5a_hex p_m5a_oct p_m5a_dec p_m5a_dodec
         0.05;
+    update_maxme;
     ENDIF;
     IF {{enable_multipole_b}};
     ELT_DRIFT_LENGTH p_drift_m5a_m5b;
+    update_maxme;
     ELT_MULTIPOLE_5 
         p_m5b_length
         p_m5b_quad p_m5b_hex p_m5b_oct p_m5b_dec p_m5b_dodec
         0.05;
+    update_maxme;
     ENDIF;
     ELT_DRIFT_LENGTH p_drift_pre_bend;
+    update_maxme;
     ELT_BENDING
         p_bend_radius p_bend_angle 0.075
         IDK_WHAT_THIS_DOES shape_in shape_out 5;
+    update_maxme;
     ELT_DRIFT_LENGTH p_drift_post_bend;
+    update_maxme;
     IF {{enable_multipole_c}};
     ELT_MULTIPOLE_5 
         p_m5c_length
         p_m5c_quad p_m5c_hex p_m5c_oct p_m5c_dec p_m5c_dodec
         0.05;
+    update_maxme;
     ENDIF;
     IF {{enable_multipole_d}};
     ELT_DRIFT_LENGTH p_drift_m5c_m5d;
+    update_maxme;
     ELT_MULTIPOLE_5 
         p_m5d_length
         p_m5d_quad p_m5d_hex p_m5d_oct p_m5d_dec p_m5d_dodec
         0.05;
+    update_maxme;
     ENDIF;
     IF {{enable_multipole_c}};
     ELT_DRIFT_LENGTH p_drift_pre_hodoscope;
+    update_maxme;
     ENDIF;
     
     ELT_APERTURE 0.05; {for scoping hodoscope size}
@@ -243,13 +270,18 @@ PROCEDURE main_common;
 
     IF {{do_fit}};
         FIT {{fit_args}};
-            { IF p_bend_radius<0.001; p_bend_radius := 0.001; ENDIF;
+            IF p_bend_radius<0.001; p_bend_radius := 0.001; ENDIF;
             IF p_drift_post_aperture<0.05; p_drift_post_aperture := 0.05; ENDIF;
-            IF p_drift_pre_bend<0.001; p_drift_pre_bend := 0.001; ENDIF; }
+            IF p_drift_pre_bend<0.01; p_drift_pre_bend := 0.01; ENDIF;
+            IF p_drift_post_bend<0.01; p_drift_post_bend := 0.01; ENDIF;
+            IF p_drift_m5a_m5b<0.01; p_drift_m5a_m5b := 0.01; ENDIF;
+            IF p_drift_m5c_m5d<0.01; p_drift_m5c_m5d := 0.01; ENDIF;
             IF p_drift_pre_hodoscope<0.2; p_drift_pre_hodoscope := 0.2; ENDIF;
             IF p_drift_pre_hodoscope>0.5; p_drift_pre_hodoscope := 0.5; ENDIF;
-            { IF p_m5a_length<0.01; p_m5a_length := 0.01; ENDIF;
-            IF p_m5b_length<0.01; p_m5b_length := 0.01; ENDIF; }
+            IF p_m5a_length<0.05; p_m5a_length := 0.05; ENDIF;
+            IF p_m5b_length<0.05; p_m5b_length := 0.05; ENDIF;
+            IF p_m5c_length<0.05; p_m5c_length := 0.05; ENDIF;
+            IF p_m5d_length<0.05; p_m5d_length := 0.05; ENDIF;
 
             UNITY_MAP;
             CLEAR_RAYS;
@@ -272,7 +304,8 @@ PROCEDURE main_common;
             { obj := MAX(ME(1,1),50*ME(1,2)); }
             { obj := ME(1,1)+4*ME(1,2); }
             { obj := ABS(ME(1,1))+10*ABS(ME(1,2)); }
-            obj := ME(1,2);
+            { obj := ME(1,2); }
+            obj := {{fit_objective}};
             IF {{fit_objective_beamsize}};
                 obj := (VMAX(RAY(1))-VMIN(RAY(1)))/2;
             ENDIF;

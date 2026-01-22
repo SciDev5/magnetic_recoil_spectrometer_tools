@@ -85,9 +85,9 @@ def run_sim():
     # plt.hist([en[i == 0] / MeV, en[i == 1] / MeV], bins=250, stacked=True)
     plt.hist([en[i == 0] / MeV, en[i == 1] / MeV], bins=int(16 / 0.150), stacked=True)
     plt.title(
-        f"post-aperture electron energy\n[{material_name[0].upper()}{material_name[1:]} {x_depth_mm}mm; foil r={R_FOIL/0.01}cm, drift {DIST_APERTURE/0.01}cm, aperture r={R_APERTURE/0.01}cm]"
+        f"Post-Aperture Electron Energy\n[{material_name[0].upper()}{material_name[1:]} {x_depth_mm}mm; foil r={R_FOIL/0.01}cm, drift {DIST_APERTURE/0.01}cm, aperture r={R_APERTURE/0.01}cm]"
     )
-    plt.legend(["compton", "pair production"])
+    plt.legend(["incoherent", "pair-production"])
     plt.xlabel("electron energy /MeV")
     plt.ylabel("counts")
     plt.savefig(f"./scripts/fig_outputs/{material_name}_{x_depth_mm}mm_spectrum.png")
