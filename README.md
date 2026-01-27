@@ -27,7 +27,7 @@
 There are several scripts (which are called from the project root directory as `python -m scripts.<name of script>`):
 
 - `gen_pairprod_crosssection`: Generate / integrate and save the raw cross-section data for pair-production (note: very long run time).
-- `do_measurements`: Run the monte carlo sim several times and output figures.
+- `gen_figures_mergs`: Run several simulations and output figures.
 
 ## Implementation Notes
 
