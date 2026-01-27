@@ -41,7 +41,7 @@ def run_sim():
     ]
 
     elec_angle, elec_energy, ids = foil_trace(
-        n_rays_incident=N,
+        n_rays_base=N,
         n_srxm_steps=100,
         phot_energy_in=16 * MeV,
         foil_properties=x_foil,

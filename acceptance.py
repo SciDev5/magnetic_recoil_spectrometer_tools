@@ -57,12 +57,13 @@ def srxm_attenuate(
 
 
 def foil_trace(
-    n_rays_incident: int,
+    n_rays_base: int,
     n_srxm_steps: int,
     phot_energy_in: float,
     foil_properties: Foil,
     foil_depth: float,
-) -> AngleEnergyId:
+    apply_conversion_efficiency: bool,
+) -> tuple[AngleEnergyId, float]:
     """
     Simulates the number, energy, and direction of the charged scattering products of
     `n_rays_incident` neutral rays with energy `phot_energy_in` through a foil with
@@ -77,11 +78,11 @@ def foil_trace(
         cross_section[0](phot_energy_in) for cross_section in cross_sections
     ]
     p_density = np.sum(cross_section_density_totals)
-    n_rays_interacting = rng.binomial(
-        n_rays_incident, 1 - np.exp(-p_density * foil_depth)
-    )
+    base_efficiency = 1 - np.exp(-p_density * foil_depth)
+    n_rays_interacting = rng.binomial(n_rays_base, base_efficiency)
     process_interaction_counts = random_partition(
-        cross_section_density_totals, n_rays_interacting
+        cross_section_density_totals,
+        n_rays_interacting if apply_conversion_efficiency else n_rays_base,
     )
 
     elec_angles_out: list[npt.NDArray] = []
@@ -93,9 +94,7 @@ def foil_trace(
         elec_energy = elec_energy[valid]
 
         v = rng.random(elec_energy.size)
-        ray_depth = (
-            -1 / p_density * np.log(1 - v * (1 - np.exp(-p_density * foil_depth)))
-        )
+        ray_depth = -1 / p_density * np.log(1 - v * base_efficiency)
         elec_energy = srxm_attenuate(
             elec_energy,
             (foil_depth - ray_depth) / np.cos(elec_angle),
@@ -107,9 +106,14 @@ def foil_trace(
         elec_energies_out.append(elec_energy[valid])
 
     return (
-        np.concatenate(elec_angles_out),
-        np.concatenate(elec_energies_out),
-        np.concatenate([np.repeat([i], x.size) for i, x in enumerate(elec_angles_out)]),
+        (
+            np.concatenate(elec_angles_out),
+            np.concatenate(elec_energies_out),
+            np.concatenate(
+                [np.repeat([i], x.size) for i, x in enumerate(elec_angles_out)]
+            ),
+        ),
+        base_efficiency,
     )
 
 
