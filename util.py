@@ -43,7 +43,7 @@ def dsolid_dspherical(a: npt.NDArray) -> npt.NDArray:
 ########################################################################
 # ==== RANDOMIZATION
 
-rng = np.random.default_rng()
+rng = np.random.default_rng(674206914621)
 
 
 # [i], [j], [i, j, ..] -> [i, ..]

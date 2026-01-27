@@ -1,4 +1,6 @@
-# Generate Figures for MERGS device
+"""
+Generate Figures for MERGS device
+"""
 
 from typing import Protocol
 
